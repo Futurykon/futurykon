@@ -10,13 +10,13 @@ export const Header = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-white/70 backdrop-blur-md border-b border-white/30 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
+          <Link to="/" className="text-2xl font-bold text-magenta hover:text-magenta/80 transition-colors">
             Futurykon
           </Link>
-          
+
           <nav className="flex items-center gap-6">
             <Link to="/questions" className="text-muted-foreground hover:text-foreground transition-colors">
               Pytania
@@ -24,7 +24,7 @@ export const Header = () => {
             <Link to="/ask" className="text-muted-foreground hover:text-foreground transition-colors">
               Zadaj pytanie
             </Link>
-            
+
             {user ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
@@ -37,7 +37,7 @@ export const Header = () => {
               </div>
             ) : (
               <>
-                <Button variant="outline" size="sm" onClick={() => setAuthOpen(true)}>
+                <Button variant="outline" size="sm" className="border-magenta/30 text-magenta hover:bg-magenta hover:text-white" onClick={() => setAuthOpen(true)}>
                   <User className="w-4 h-4 mr-2" />
                   Logowanie
                 </Button>
