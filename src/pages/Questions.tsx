@@ -337,8 +337,8 @@ export default function Questions() {
                         <p className="text-muted-foreground mb-2">
                           Zaloguj się, aby dodać swoją predykcję
                         </p>
-                        <Button variant="outline" onClick={() => window.location.href = '/'}>
-                          Przejdź do logowania
+                        <Button variant="outline" asChild>
+                          <a href="/signin">Przejdź do logowania</a>
                         </Button>
                       </div>
                     )}

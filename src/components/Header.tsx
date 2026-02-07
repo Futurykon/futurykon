@@ -1,12 +1,9 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { User, LogOut } from "lucide-react";
-import { AuthDialog } from "@/components/auth/AuthDialog";
 
 export const Header = () => {
-  const [authOpen, setAuthOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   return (
@@ -36,13 +33,12 @@ export const Header = () => {
                 </Button>
               </div>
             ) : (
-              <>
-                <Button variant="outline" size="sm" className="border-magenta/30 text-magenta hover:bg-magenta hover:text-white" onClick={() => setAuthOpen(true)}>
+              <Button variant="outline" size="sm" className="border-magenta/30 text-magenta hover:bg-magenta hover:text-white" asChild>
+                <Link to="/signin">
                   <User className="w-4 h-4 mr-2" />
                   Logowanie
-                </Button>
-                <AuthDialog open={authOpen} onOpenChange={setAuthOpen} title="Zaloguj się do Futurykon" />
-              </>
+                </Link>
+              </Button>
             )}
           </nav>
         </div>

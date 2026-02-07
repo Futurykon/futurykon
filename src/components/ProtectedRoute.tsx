@@ -1,10 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Lock, Mail } from 'lucide-react';
 import { Header } from '@/components/Header';
-import { AuthDialog } from '@/components/auth/AuthDialog';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,7 +9,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
-  const [authOpen, setAuthOpen] = useState(true);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -26,17 +23,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <Header />
-        <AuthDialog open={authOpen} onOpenChange={setAuthOpen} title="Zaloguj się do Futurykon" />
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-          <Button variant="outline" onClick={() => setAuthOpen(true)}>
-            Otwórz okno logowania
-          </Button>
-        </div>
-      </div>
-    );
+    return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
