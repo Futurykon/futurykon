@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, TrendingUp, Users } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Header } from '@/components/Header';
@@ -25,9 +25,11 @@ interface Question {
 interface Prediction {
   id: string;
   question_id: string;
+  user_id: string;
   probability: number;
   reasoning: string;
   created_at: string;
+  user_email?: string;
 }
 
 interface CommunityPrediction {
@@ -38,7 +40,7 @@ interface CommunityPrediction {
 
 export default function Questions() {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
+  const [predictions, setPredictions] = useState<Record<string, Prediction[]>>({});
   const [communityPredictions, setCommunityPredictions] = useState<Record<string, CommunityPrediction>>({});
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [probability, setProbability] = useState([50]);
@@ -68,20 +70,31 @@ export default function Questions() {
   };
 
   const fetchPredictions = async () => {
-    if (!user) return;
     const { data, error } = await supabase
       .from('predictions')
-      .select('*')
-      .eq('user_id', user.id);
+      .select('*, profiles(email)')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching predictions:', error);
       return;
     }
 
-    const predictionMap: Record<string, Prediction> = {};
-    data?.forEach((prediction) => {
-      predictionMap[prediction.question_id] = prediction;
+    const predictionMap: Record<string, Prediction[]> = {};
+    data?.forEach((row: any) => {
+      const prediction: Prediction = {
+        id: row.id,
+        question_id: row.question_id,
+        user_id: row.user_id,
+        probability: row.probability,
+        reasoning: row.reasoning,
+        created_at: row.created_at,
+        user_email: row.profiles?.email ?? undefined,
+      };
+      if (!predictionMap[prediction.question_id]) {
+        predictionMap[prediction.question_id] = [];
+      }
+      predictionMap[prediction.question_id].push(prediction);
     });
     setPredictions(predictionMap);
   };
@@ -103,8 +116,13 @@ export default function Questions() {
     setCommunityPredictions(communityMap);
   };
 
+  const getUserPrediction = (questionId: string): Prediction | undefined => {
+    if (!user) return undefined;
+    return predictions[questionId]?.find((p) => p.user_id === user.id);
+  };
+
   const handleEditPrediction = (question: Question) => {
-    const existingPrediction = predictions[question.id];
+    const existingPrediction = getUserPrediction(question.id);
     if (existingPrediction) {
       setProbability([existingPrediction.probability]);
       setReasoning(existingPrediction.reasoning || '');
@@ -120,7 +138,7 @@ export default function Questions() {
     const predictionData = {
       question_id: questionId,
       user_id: user.id,
-      probability: probability[0],
+      probability: Math.round(probability[0]),
       reasoning: reasoning
     };
 
@@ -166,7 +184,8 @@ export default function Questions() {
 
         <div className="grid gap-6">
           {questions.map((question) => {
-            const userPrediction = predictions[question.id];
+            const userPrediction = getUserPrediction(question.id);
+            const allPredictions = predictions[question.id] || [];
             const communityPrediction = communityPredictions[question.id];
             const expired = isExpired(question.close_date);
 
@@ -223,87 +242,59 @@ export default function Questions() {
                     </div>
                   )}
 
-                  {userPrediction && selectedQuestion !== question.id ? (
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
+                  {/* Prediction form / action area */}
+                  {selectedQuestion === question.id ? (
+                    <div className="space-y-4 mb-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="probability-input" className="text-base font-medium">
+                          Prawdopodobieństwo: {Math.round(probability[0])}%
+                        </Label>
                         <div className="flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-primary" />
-                          <span className="font-medium">Twoja predykcja: {userPrediction.probability}%</span>
+                          <Input
+                            id="probability-input"
+                            type="number"
+                            inputMode="numeric"
+                            step="1"
+                            min={0}
+                            max={100}
+                            value={Number.isFinite(probability[0]) ? Math.round(probability[0]) : 0}
+                            onChange={(e) => {
+                              const num = parseInt(e.target.value, 10);
+                              if (isNaN(num)) {
+                                setProbability([0]);
+                                return;
+                              }
+                              setProbability([Math.max(0, Math.min(100, num))]);
+                            }}
+                            className="w-32"
+                          />
+                          <span className="text-muted-foreground">%</span>
                         </div>
-                        {!expired && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditPrediction(question)}
-                          >
-                            Edytuj
-                          </Button>
-                        )}
-                      </div>
-                      {userPrediction.reasoning && (
-                        <p className="text-sm text-muted-foreground">{userPrediction.reasoning}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Zapisano: {format(new Date(userPrediction.created_at), 'd MMMM yyyy, HH:mm', { locale: pl })}
-                      </p>
-                    </div>
-                  ) : selectedQuestion === question.id ? (
-                    <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="probability-input" className="text-base font-medium">
-                                Prawdopodobieństwo: {probability[0]}%
-                              </Label>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  id="probability-input"
-                                  type="number"
-                                  inputMode="decimal"
-                                  step="0.01"
-                                  min={0}
-                                  max={100}
-                                  value={Number.isFinite(probability[0]) ? probability[0] : 0}
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    let num = parseFloat(raw);
-                                    if (isNaN(num)) {
-                                      setProbability([0]);
-                                      return;
-                                    }
-                                    // Clamp 0–100 and truncate to 2 decimals (no rounding)
-                                    num = Math.max(0, Math.min(100, num));
-                                    num = Math.trunc(num * 100) / 100;
-                                    setProbability([num]);
-                                  }}
-                                  className="w-32"
-                                />
-                                <span className="text-muted-foreground">%</span>
-                              </div>
 
-                              <Slider
-                                id="probability-slider"
-                                min={0}
-                                max={100}
-                                step={1}
-                                value={probability}
-                                onValueChange={(vals) => {
-                                  // Slider interaction rounds to full integers
-                                  const v = Array.isArray(vals) ? vals[0] : Number(vals);
-                                  setProbability([Math.round(v)]);
-                                }}
-                                className="mt-2"
-                              />
-                            </div>
-                            
-                            <div>
-                              <Label htmlFor="reasoning">Uzasadnienie (opcjonalne)</Label>
-                              <Textarea
-                                id="reasoning"
-                                placeholder="Dlaczego uważasz, że to prawdopodobieństwo jest poprawne?"
-                                value={reasoning}
-                                onChange={(e) => setReasoning(e.target.value)}
-                                className="mt-2"
-                              />
-                            </div>
+                        <Slider
+                          id="probability-slider"
+                          min={0}
+                          max={100}
+                          step={1}
+                          value={probability}
+                          onValueChange={(vals) => {
+                            const v = Array.isArray(vals) ? vals[0] : Number(vals);
+                            setProbability([Math.round(v)]);
+                          }}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reasoning">Uzasadnienie (opcjonalne)</Label>
+                        <Textarea
+                          id="reasoning"
+                          placeholder="Dlaczego uważasz, że to prawdopodobieństwo jest poprawne?"
+                          value={reasoning}
+                          onChange={(e) => setReasoning(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
 
                       <div className="flex gap-2">
                         <Button
@@ -326,28 +317,73 @@ export default function Questions() {
                         </Button>
                       </div>
                     </div>
-                  ) : !userPrediction && !expired ? (
-                    <div>
+                  ) : !expired ? (
+                    <div className="mb-4">
                       {user ? (
-                        <Button onClick={() => setSelectedQuestion(question.id)}>
-                          Dodaj predykcję
-                        </Button>
+                        userPrediction ? (
+                          <Button variant="outline" size="sm" onClick={() => handleEditPrediction(question)}>
+                            Edytuj swoją predykcję
+                          </Button>
+                        ) : (
+                          <Button onClick={() => setSelectedQuestion(question.id)}>
+                            Dodaj predykcję
+                          </Button>
+                        )
                       ) : (
-                      <div className="bg-muted/50 p-4 rounded-lg text-center">
-                        <p className="text-muted-foreground mb-2">
-                          Zaloguj się, aby dodać swoją predykcję
-                        </p>
-                        <Button variant="outline" asChild>
-                          <a href="/signin">Przejdź do logowania</a>
-                        </Button>
+                        <div className="bg-muted/50 p-4 rounded-lg text-center">
+                          <p className="text-muted-foreground mb-2">
+                            Zaloguj się, aby dodać swoją predykcję
+                          </p>
+                          <Button variant="outline" asChild>
+                            <a href="/signin">Przejdź do logowania</a>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : !userPrediction ? (
+                    <div className="text-muted-foreground text-sm mb-4">
+                      To pytanie zostało już zamknięte dla nowych predykcji.
+                    </div>
+                  ) : null}
+
+                  {/* All predictions – comment thread */}
+                  {allPredictions.length > 0 && (
+                    <div className="border-t pt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                        <h4 className="font-medium text-sm">
+                          Predykcje ({allPredictions.length})
+                        </h4>
                       </div>
-                    )}
-                  </div>
-                ) : !userPrediction && expired ? (
-                  <div className="text-muted-foreground text-sm">
-                    To pytanie zostało już zamknięte dla nowych predykcji.
-                  </div>
-                ) : null}
+                      <div className="space-y-3">
+                        {allPredictions.map((pred) => {
+                          const isOwn = user?.id === pred.user_id;
+                          return (
+                            <div
+                              key={pred.id}
+                              className={`p-3 rounded-lg text-sm ${isOwn ? 'bg-primary/5 border border-primary/20' : 'bg-muted/50'}`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {pred.user_email ?? 'Anonim'}
+                                    {isOwn && <span className="text-primary ml-1">(Ty)</span>}
+                                  </span>
+                                  <span className="font-semibold text-primary">{pred.probability}%</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(pred.created_at), 'd MMMM yyyy, HH:mm', { locale: pl })}
+                                </span>
+                              </div>
+                              {pred.reasoning && (
+                                <p className="text-muted-foreground mt-1">{pred.reasoning}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
