@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,7 @@ import {
   Brain,
   Zap
 } from "lucide-react";
-import { AuthDialog } from "@/components/auth/AuthDialog";
-
 const Index = () => {
-  const [joinOpen, setJoinOpen] = useState(false);
-  const [signupOpen, setSignupOpen] = useState(false);
 
   const howItWorksSteps = [
     {
@@ -169,10 +165,9 @@ const Index = () => {
               Dołącz do polskiego rynku prognoz AI Futurykon, gdzie eksperci przewidują przyszłość sztucznej inteligencji.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="bg-magenta hover:bg-magenta/80 text-white text-lg px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg" onClick={() => setJoinOpen(true)}>
-                Dołącz do Futurykon
+              <Button size="lg" className="bg-magenta hover:bg-magenta/80 text-white text-lg px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg" asChild>
+                <Link to="/signup">Dołącz do Futurykon</Link>
               </Button>
-              <AuthDialog open={joinOpen} onOpenChange={setJoinOpen} title="Zarejestruj się w Futurykon" />
 
               <div className="flex gap-4">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm" asChild>
@@ -358,10 +353,9 @@ const Index = () => {
               Dołącz do polskiej platformy prognoz AI Futurykon i pomóż przewidywać przyszłość sztucznej inteligencji.
             </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-magenta hover:bg-white/90 text-lg px-8 py-4 rounded-xl shadow-lg" onClick={() => setSignupOpen(true)}>
-              Załóż konto
+            <Button size="lg" className="bg-white text-magenta hover:bg-white/90 text-lg px-8 py-4 rounded-xl shadow-lg" asChild>
+              <Link to="/signup">Załóż konto</Link>
             </Button>
-            <AuthDialog open={signupOpen} onOpenChange={setSignupOpen} title="Zarejestruj się w Futurykon" />
 
             <Button size="lg" variant="outline" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white">
               Przeglądaj rynki
