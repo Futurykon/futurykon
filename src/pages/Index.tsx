@@ -1,20 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-image.jpg";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { 
-  TrendingUp, 
-  Users, 
-  Target, 
-  Award, 
-  Globe, 
-  Code, 
-  CreditCard, 
+import {
+  TrendingUp,
+  Users,
+  Target,
+  Award,
+  Globe,
+  Code,
+  CreditCard,
   Trophy,
   MessageSquare,
   Twitter,
@@ -34,19 +30,22 @@ const Index = () => {
 
   const howItWorksSteps = [
     {
-      icon: <Brain className="w-8 h-8 text-primary" />,
+      icon: <Brain className="w-8 h-8" />,
       title: "Analizuj trendy AI",
-      description: "Publikuj prognozy o rozwoju sztucznej inteligencji"
+      description: "Publikuj prognozy o rozwoju sztucznej inteligencji",
+      color: "bg-crimson"
     },
     {
-      icon: <TrendingUp className="w-8 h-8 text-primary" />,
+      icon: <TrendingUp className="w-8 h-8" />,
       title: "Przewiduj przełomy",
-      description: "Oceniaj prawdopodobieństwo kluczowych osiągnięć AI"
+      description: "Oceniaj prawdopodobieństwo kluczowych osiągnięć AI",
+      color: "bg-magenta"
     },
     {
-      icon: <Award className="w-8 h-8 text-primary" />,
+      icon: <Award className="w-8 h-8" />,
       title: "Buduj reputację",
-      description: "Zdobywaj punkty za trafne prognozy technologiczne"
+      description: "Zdobywaj punkty za trafne prognozy technologiczne",
+      color: "bg-[hsl(203,100%,45%)]"
     }
   ];
 
@@ -54,22 +53,22 @@ const Index = () => {
     {
       title: "Eksperci AI",
       description: "Społeczność badaczy i praktyków AI",
-      icon: <Brain className="w-6 h-6 text-primary" />
+      icon: <Brain className="w-6 h-6 text-crimson" />
     },
     {
       title: "Dane w czasie rzeczywistym",
       description: "Aktualne trendy i metryki rozwoju AI",
-      icon: <BarChart3 className="w-6 h-6 text-primary" />
+      icon: <BarChart3 className="w-6 h-6 text-magenta" />
     },
     {
       title: "Bezpłatne prognozy",
       description: "Dostęp do wszystkich prognoz bez opłat",
-      icon: <Zap className="w-6 h-6 text-primary" />
+      icon: <Zap className="w-6 h-6 text-crimson" />
     },
     {
       title: "Ranking ekspertów",
       description: "Leaderboard najlepszych prognostów AI",
-      icon: <Trophy className="w-6 h-6 text-primary" />
+      icon: <Trophy className="w-6 h-6 text-magenta" />
     }
   ];
 
@@ -119,7 +118,7 @@ const Index = () => {
     },
     {
       name: "Michał Z.",
-      avatar: "MZ", 
+      avatar: "MZ",
       content: "Pracuję w AI i Futurykon pomaga śledzić trendy. Świetne źródło zbiorowej mądrości ekspertów."
     },
     {
@@ -139,7 +138,7 @@ const Index = () => {
     {
       name: "Anna Nowak",
       role: "CTO",
-      avatar: "AN", 
+      avatar: "AN",
       linkedin: "#"
     },
     {
@@ -154,58 +153,60 @@ const Index = () => {
     <div className="min-h-screen bg-background font-sans">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          style={{ backgroundImage: `url(https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=1920&q=80)` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-background/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(0,97%,49%)]/80 via-[hsl(310,98%,38%)]/70 to-[hsl(240,100%,86%)]/60"></div>
         </div>
-        
+
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-charcoal via-primary to-navy bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white drop-shadow-lg">
               Przewiduj rozwój AI.<br />Kształtuj przyszłość technologii.
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-serif max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-white/90 mb-8 font-serif max-w-3xl mx-auto drop-shadow">
               Dołącz do polskiego rynku prognoz AI Futurykon, gdzie eksperci przewidują przyszłość sztucznej inteligencji.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105" onClick={() => setJoinOpen(true)}>
+              <Button size="lg" className="bg-magenta hover:bg-magenta/80 text-white text-lg px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg" onClick={() => setJoinOpen(true)}>
                 Dołącz do Futurykon
               </Button>
               <AuthDialog open={joinOpen} onOpenChange={setJoinOpen} title="Zarejestruj się w Futurykon" />
 
               <div className="flex gap-4">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl" asChild>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm" asChild>
                   <a href="/questions">Rób predykcje</a>
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl" asChild>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm" asChild>
                   <a href="/ask">Zadaj pytanie</a>
                 </Button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronDown className="w-8 h-8 text-muted-foreground" />
+          <ChevronDown className="w-8 h-8 text-white/70" />
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-arctic/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Jak to działa</h2>
             <p className="text-xl text-muted-foreground font-serif">Trzy proste kroki do lepszych prognoz</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {howItWorksSteps.map((step, index) => (
-              <Card key={index} className="text-center p-8 hover:shadow-lg transition-all duration-300 hover:scale-105">
+              <Card key={index} className="text-center p-8 hover:shadow-xl transition-all duration-300 hover:scale-105 border-0 shadow-md">
                 <CardContent className="p-0">
-                  <div className="mb-6 flex justify-center">
-                    {step.icon}
+                  <div className={`mb-6 flex justify-center`}>
+                    <div className={`w-16 h-16 ${step.color} text-white rounded-2xl flex items-center justify-center`}>
+                      {step.icon}
+                    </div>
                   </div>
                   <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
                   <p className="text-muted-foreground font-serif">{step.description}</p>
@@ -216,17 +217,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Why Utra */}
+      {/* Why Futurykon */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Dlaczego Futurykon?</h2>
             <p className="text-xl text-muted-foreground font-serif">Pierwsza polska platforma prognoz rozwoju AI</p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, index) => (
-              <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
+              <Card key={index} className="p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 glass border-0">
                 <CardContent className="p-0">
                   <div className="mb-4">
                     {benefit.icon}
@@ -241,20 +242,20 @@ const Index = () => {
       </section>
 
       {/* Applications */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-arctic/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Obszary prognoz AI</h2>
             <p className="text-xl text-muted-foreground font-serif">Przewiduj przełomy w kluczowych dziedzinach sztucznej inteligencji</p>
           </div>
-          
+
           <div className="relative max-w-4xl mx-auto">
             <Carousel className="w-full">
               <CarouselContent>
                 {applications.map((app, index) => (
                   <CarouselItem key={index}>
-                    <Card className="relative overflow-hidden h-96">
-                      <div 
+                    <Card className="relative overflow-hidden h-96 border-0 shadow-xl">
+                      <div
                         className="absolute inset-0 bg-cover bg-center"
                         style={{
                           backgroundImage: `url(https://images.unsplash.com/${app.image}?w=800&h=600&fit=crop)`
@@ -263,12 +264,12 @@ const Index = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                       </div>
                       <CardContent className="relative z-10 p-8 h-full flex flex-col justify-end text-white">
-                        <Badge className="self-start mb-4 bg-primary text-primary-foreground">
+                        <Badge className="self-start mb-4 bg-magenta text-white border-0">
                           {app.category}
                         </Badge>
                         <h3 className="text-xl font-semibold mb-4 font-serif">{app.example}</h3>
                         <div className="flex justify-between items-center">
-                          <div className="text-2xl font-bold text-accent">
+                          <div className="text-2xl font-bold text-peach">
                             {app.probability}%
                           </div>
                           <div className="text-sm opacity-80">
@@ -296,13 +297,13 @@ const Index = () => {
               Ponad 2,000 prognoz stworzonych, 500+ użytkowników w pierwszym miesiącu
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="p-6">
+              <Card key={index} className="p-6 border-0 shadow-md hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-0">
                   <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
+                    <div className="w-12 h-12 bg-magenta text-white rounded-full flex items-center justify-center font-semibold">
                       {testimonial.avatar}
                     </div>
                     <div className="ml-3">
@@ -318,23 +319,23 @@ const Index = () => {
       </section>
 
       {/* Team */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-arctic/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Poznaj zespół</h2>
             <p className="text-xl text-muted-foreground font-serif">Eksperci z pasją do prognozowania</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             {teamMembers.map((member, index) => (
-              <Card key={index} className="text-center p-6">
+              <Card key={index} className="text-center p-6 border-0 shadow-md hover:shadow-xl transition-all duration-300">
                 <CardContent className="p-0">
-                  <div className="w-20 h-20 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-crimson to-magenta text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">
                     {member.avatar}
                   </div>
                   <h3 className="text-lg font-semibold mb-1">{member.name}</h3>
                   <p className="text-muted-foreground mb-4 font-serif">{member.role}</p>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" className="border-magenta/30 text-magenta hover:bg-magenta hover:text-white" asChild>
                     <a href={member.linkedin} target="_blank" rel="noopener noreferrer">
                       <Linkedin className="w-4 h-4 mr-2" />
                       LinkedIn
@@ -348,21 +349,21 @@ const Index = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-r from-primary via-navy to-charcoal text-white">
+      <section className="py-20 aurora-gradient-linear text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg">
             Twoje przewidywania mają znaczenie
           </h2>
-            <p className="text-xl mb-8 font-serif opacity-90 max-w-2xl mx-auto">
+            <p className="text-xl mb-8 font-serif opacity-90 max-w-2xl mx-auto drop-shadow">
               Dołącz do polskiej platformy prognoz AI Futurykon i pomóż przewidywać przyszłość sztucznej inteligencji.
             </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-4 rounded-xl" onClick={() => setSignupOpen(true)}>
+            <Button size="lg" className="bg-white text-magenta hover:bg-white/90 text-lg px-8 py-4 rounded-xl shadow-lg" onClick={() => setSignupOpen(true)}>
               Załóż konto
             </Button>
             <AuthDialog open={signupOpen} onOpenChange={setSignupOpen} title="Zarejestruj się w Futurykon" />
 
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4 rounded-xl border-white text-white hover:bg-white hover:text-charcoal">
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white">
               Przeglądaj rynki
             </Button>
           </div>
@@ -370,16 +371,16 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-charcoal text-white">
+      <footer className="py-12 bg-[hsl(260,30%,12%)] text-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">Futurykon</h3>
+              <h3 className="text-2xl font-bold mb-4 text-magenta">Futurykon</h3>
               <p className="text-gray-400 font-serif">
                 Polska platforma predykcji.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Produkt</h4>
               <ul className="space-y-2 text-gray-400">
@@ -388,7 +389,7 @@ const Index = () => {
                 <li><a href="#" className="hover:text-white transition-colors">API</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Prawne</h4>
               <ul className="space-y-2 text-gray-400">
@@ -396,7 +397,7 @@ const Index = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Polityka prywatności</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Social</h4>
               <div className="flex space-x-4">
@@ -415,8 +416,8 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+
+          <div className="border-t border-white/10 pt-8 text-center text-gray-400">
             <p>&copy; 2025 Futurykon. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>

@@ -2,91 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Aurora Gradient Design System. All colors are HSL. */
 
 @layer base {
   :root {
-    --background: 35 58% 98%;
-    --foreground: 30 59% 15%;
+    --background: 240 33% 99%;
+    --foreground: 240 29% 14%;
 
-    --card: 35 58% 96%;
-    --card-foreground: 30 59% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 29% 14%;
 
-    --popover: 35 58% 98%;
-    --popover-foreground: 30 59% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 29% 14%;
 
-    --primary: 24 54% 42%;
-    --primary-foreground: 35 58% 98%;
+    --primary: 310 98% 38%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 42 27% 85%;
-    --secondary-foreground: 30 59% 15%;
+    --secondary: 240 100% 86%;
+    --secondary-foreground: 240 29% 14%;
 
-    --muted: 42 27% 85%;
-    --muted-foreground: 30 42% 25%;
+    --muted: 203 60% 94%;
+    --muted-foreground: 240 10% 40%;
 
-    --accent: 24 54% 42%;
-    --accent-foreground: 35 58% 98%;
+    --accent: 0 97% 49%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 50%;
-    --destructive-foreground: 35 58% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 75%;
-    --input: 30 20% 75%;
-    --ring: 24 54% 42%;
+    --border: 240 20% 90%;
+    --input: 240 20% 90%;
+    --ring: 310 98% 38%;
 
-    --charcoal: 30 42% 34%;
-    --navy: 30 42% 20%;
-    --neon-turquoise: 24 40% 52%;
+    --crimson: 0 97% 49%;
+    --magenta: 310 98% 38%;
+    --lavender: 240 100% 86%;
+    --arctic: 203 100% 91%;
+    --peach: 16 100% 93%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 30 42% 8%;
-    --foreground: 35 58% 95%;
+    --background: 260 20% 8%;
+    --foreground: 240 20% 95%;
 
-    --card: 30 42% 12%;
-    --card-foreground: 35 58% 95%;
+    --card: 260 20% 12%;
+    --card-foreground: 240 20% 95%;
 
-    --popover: 30 42% 8%;
-    --popover-foreground: 35 58% 95%;
+    --popover: 260 20% 8%;
+    --popover-foreground: 240 20% 95%;
 
-    --primary: 42 54% 70%;
-    --primary-foreground: 30 42% 8%;
+    --primary: 310 80% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 42% 20%;
-    --secondary-foreground: 35 58% 95%;
+    --secondary: 240 30% 25%;
+    --secondary-foreground: 240 20% 95%;
 
-    --muted: 30 42% 20%;
-    --muted-foreground: 35 20% 75%;
+    --muted: 260 15% 20%;
+    --muted-foreground: 240 15% 70%;
 
-    --accent: 42 54% 70%;
-    --accent-foreground: 30 42% 8%;
+    --accent: 0 80% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 75% 55%;
-    --destructive-foreground: 35 58% 95%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 25%;
-    --input: 30 20% 25%;
-    --ring: 42 54% 70%;
+    --border: 260 15% 22%;
+    --input: 260 15% 22%;
+    --ring: 310 80% 55%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -113,14 +107,43 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  .aurora-gradient {
+    background: radial-gradient(
+      ellipse at 20% 20%,
+      hsl(var(--crimson)) 0%,
+      hsl(var(--magenta)) 25%,
+      hsl(var(--lavender)) 50%,
+      hsl(var(--arctic)) 75%,
+      hsl(var(--peach)) 100%
+    );
+  }
+
+  .aurora-gradient-linear {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--crimson)) 0%,
+      hsl(var(--magenta)) 30%,
+      hsl(var(--lavender)) 60%,
+      hsl(var(--arctic)) 100%
+    );
+  }
+
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/30;
+  }
+
+  .glass-dark {
+    @apply bg-black/30 backdrop-blur-md border border-white/10;
+  }
+
   .animate-fade-in {
     animation: fade-in 1s ease-out;
   }
-  
+
   .animate-slide-up {
     animation: slide-up 0.8s ease-out;
   }
-  
+
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -131,7 +154,7 @@ All colors MUST be HSL.
       transform: translateY(0);
     }
   }
-  
+
   @keyframes slide-up {
     from {
       opacity: 0;
