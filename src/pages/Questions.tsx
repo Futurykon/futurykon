@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Header } from '@/components/Header';
 import { PredictionThread } from '@/components/PredictionThread';
+import { PredictionHistoryChart } from '@/components/PredictionHistoryChart';
 import type { Question, Prediction, CommunityPrediction } from '@/types';
 
 export default function Questions() {
@@ -601,20 +602,30 @@ export default function Questions() {
 
                   {communityPrediction && communityPrediction.prediction_count > 0 && (
                     <div className="mb-4 bg-magenta/5 border border-magenta/20 p-4 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-primary" />
-                          <div>
-                            <div className="font-semibold text-lg">
-                              Predykcja społeczności: {communityPrediction.community_probability?.toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Na podstawie {communityPrediction.prediction_count} {communityPrediction.prediction_count === 1 ? 'predykcji' : 'predykcji'}
-                            </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Users className="w-5 h-5 text-primary" />
+                        <div>
+                          <div className="font-semibold text-lg">
+                            Predykcja społeczności: {communityPrediction.community_probability?.toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Na podstawie {communityPrediction.prediction_count} {communityPrediction.prediction_count === 1 ? 'predykcji' : 'predykcji'}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
+
+                      {/* Prediction history chart */}
+                      {allPredictions.length > 1 && (
+                        <div className="mt-4 pt-4 border-t border-magenta/20">
+                          <h4 className="text-sm font-medium mb-3">Historia predykcji</h4>
+                          <PredictionHistoryChart
+                            predictions={allPredictions}
+                            questionTitle={question.title}
+                          />
+                        </div>
+                      )}
+
+                      <div className="mt-3 text-xs text-muted-foreground">
                         Obliczona przy użyciu geometrycznej średniej szans (geometric mean of odds)
                       </div>
                     </div>

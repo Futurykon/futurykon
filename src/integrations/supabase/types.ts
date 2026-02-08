@@ -10,42 +10,10 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string
-          email: string | null
-          is_admin: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          email?: string | null
-          is_admin?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string | null
-          is_admin?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       predictions: {
         Row: {
           brier_score: number | null
@@ -85,66 +53,149 @@ export type Database = {
             foreignKeyName: "predictions_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
+            referencedRelation: "community_predictions"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "predictions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
             referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          is_admin: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id: string
+          is_admin?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          is_admin?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      question_suggestions: {
+        Row: {
+          admin_note: string | null
+          category: string | null
+          close_date: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string | null
+          suggested_by: string
+          title: string
+        }
+        Insert: {
+          admin_note?: string | null
+          category?: string | null
+          close_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          suggested_by: string
+          title: string
+        }
+        Update: {
+          admin_note?: string | null
+          category?: string | null
+          close_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          suggested_by?: string
+          title?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
-          id: string
-          title: string
-          description: string | null
-          resolution_criteria: string | null
+          author_id: string | null
+          category: string | null
           close_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          resolution_criteria: string | null
           resolution_date: string | null
           resolution_status: string | null
-          author_id: string | null
-          created_at: string
+          title: string
           updated_at: string
         }
         Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          resolution_criteria?: string | null
+          author_id?: string | null
+          category?: string | null
           close_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
-          author_id?: string | null
-          created_at?: string
+          title: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          resolution_criteria?: string | null
+          author_id?: string | null
+          category?: string | null
           close_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
-          author_id?: string | null
-          created_at?: string
+          title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "questions_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      community_predictions: {
+        Row: {
+          close_date: string | null
+          community_probability: number | null
+          prediction_count: number | null
+          question_id: string | null
+          resolution_status: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_brier_score: {
         Args: { actual_outcome: boolean; prediction_probability: number }
         Returns: number
+      }
+      calculate_community_prediction: {
+        Args: { question_uuid: string }
+        Returns: {
+          community_probability: number
+          prediction_count: number
+          question_id: string
+        }[]
       }
       calculate_time_weighted_score: {
         Args: {
