@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint and type check before pushing
+echo "🔍 Running lint check..."
+npm run lint
+
+echo "🔍 Running TypeScript check..."
+npx tsc --noEmit
+
+echo "✅ All checks passed! Pushing..."
