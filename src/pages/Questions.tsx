@@ -610,6 +610,8 @@ export default function Questions() {
                           </div>
                           <div className="text-xs text-muted-foreground">
                             Na podstawie {communityPrediction.prediction_count} {communityPrediction.prediction_count === 1 ? 'predykcji' : 'predykcji'}
+                            {' • '}
+                            Wszystkich predykcji: {allPredictions.length}
                           </div>
                         </div>
                       </div>
