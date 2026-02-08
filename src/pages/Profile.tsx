@@ -74,7 +74,12 @@ export default function Profile() {
       if (!questionMap.has(qid)) {
         questionMap.set(qid, []);
       }
-      questionMap.get(qid)!.push(pred);
+      // Cast to Prediction type to avoid profiles type mismatch
+      const prediction: Prediction = {
+        ...pred,
+        profiles: (pred as { profiles?: { email?: string; display_name?: string } }).profiles,
+      };
+      questionMap.get(qid)!.push(prediction);
     }
 
     // Fetch question details

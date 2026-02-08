@@ -71,12 +71,16 @@ export function PredictionHistoryChart({ predictions, questionTitle }: Predictio
     );
   }
 
-  // Show simple text if only one data point
+  // Show simple text if only one data point - but still show it can grow
   if (chartData.length === 1) {
     return (
-      <div className="text-center py-8 text-muted-foreground text-sm">
-        {chartData[0].communityProbability.toFixed(1)}% ({chartData[0].predictionCount}{' '}
-        {chartData[0].predictionCount === 1 ? 'predykcja' : 'predykcje'})
+      <div className="text-center py-4 text-muted-foreground text-sm">
+        <div className="font-semibold text-base mb-1">
+          {chartData[0].communityProbability.toFixed(1)}%
+        </div>
+        <div className="text-xs">
+          Wykres pojawi się po kolejnych predykcjach
+        </div>
       </div>
     );
   }

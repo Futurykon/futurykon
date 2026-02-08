@@ -615,7 +615,7 @@ export default function Questions() {
                       </div>
 
                       {/* Prediction history chart */}
-                      {allPredictions.length > 1 && (
+                      {allPredictions.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-magenta/20">
                           <h4 className="text-sm font-medium mb-3">Historia predykcji</h4>
                           <PredictionHistoryChart

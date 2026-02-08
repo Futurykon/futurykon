@@ -51,7 +51,7 @@ const AskQuestion = () => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setSuggestions(data);
+      setSuggestions(data as QuestionSuggestion[]);
     }
   };
 
