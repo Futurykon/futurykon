@@ -35,9 +35,12 @@ const AskQuestion = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchSuggestions();
-    }
+    const loadData = async () => {
+      if (isAdmin) {
+        await fetchSuggestions();
+      }
+    };
+    loadData();
   }, [isAdmin]);
 
   const fetchSuggestions = async () => {

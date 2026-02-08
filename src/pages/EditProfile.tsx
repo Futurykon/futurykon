@@ -19,12 +19,15 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/signin');
-      return;
-    }
-    loadProfile();
-  }, [user, navigate]);
+    const loadData = async () => {
+      if (!user) {
+        navigate('/signin');
+        return;
+      }
+      await loadProfile();
+    };
+    loadData();
+  }, [user, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProfile = async () => {
     if (!user) return;

@@ -44,13 +44,16 @@ export default function Questions() {
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchQuestions();
-    fetchPredictions();
-    fetchCommunityPredictions();
-    if (user) {
-      checkAdminStatus();
-    }
-  }, [user]);
+    const loadData = async () => {
+      await fetchQuestions();
+      await fetchPredictions();
+      await fetchCommunityPredictions();
+      if (user) {
+        await checkAdminStatus();
+      }
+    };
+    loadData();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAdminStatus = async () => {
     if (!user) return;
@@ -91,39 +94,57 @@ export default function Questions() {
     }
 
     const predictionMap: Record<string, Prediction[]> = {};
-    data?.forEach((row: any) => {
-      const prediction: Prediction = {
-        id: row.id,
-        question_id: row.question_id,
-        user_id: row.user_id,
-        probability: row.probability,
-        reasoning: row.reasoning,
-        created_at: row.created_at,
-        profiles: row.profiles,
-      };
-      if (!predictionMap[prediction.question_id]) {
-        predictionMap[prediction.question_id] = [];
+    if (data) {
+      for (const row of data) {
+        const prediction: Prediction = {
+          id: row.id,
+          question_id: row.question_id,
+          user_id: row.user_id,
+          probability: row.probability,
+          reasoning: row.reasoning,
+          created_at: row.created_at,
+          profiles: (row as { profiles?: { email?: string; display_name?: string } }).profiles,
+        };
+        if (!predictionMap[prediction.question_id]) {
+          predictionMap[prediction.question_id] = [];
+        }
+        predictionMap[prediction.question_id].push(prediction);
       }
-      predictionMap[prediction.question_id].push(prediction);
-    });
+    }
     setPredictions(predictionMap);
   };
 
   const fetchCommunityPredictions = async () => {
-    const { data, error } = await supabase
-      .from('community_predictions' as any)
-      .select('question_id, community_probability, prediction_count');
+    try {
+      // Cast to unknown first, then to our expected type to bypass Supabase type checking
+      const result = await supabase
+        .from('community_predictions' as never)
+        .select('question_id, community_probability, prediction_count') as unknown as {
+          data: Array<{
+            question_id: string;
+            community_probability: number | null;
+            prediction_count: number;
+          }> | null;
+          error: Error | null;
+        };
 
-    if (error) {
-      console.error('Error fetching community predictions:', error);
-      return;
+      const { data, error } = result;
+
+      if (error) {
+        console.error('Error fetching community predictions:', error);
+        return;
+      }
+
+      const communityMap: Record<string, CommunityPrediction> = {};
+      if (data) {
+        for (const cp of data) {
+          communityMap[cp.question_id] = cp;
+        }
+      }
+      setCommunityPredictions(communityMap);
+    } catch (err) {
+      console.error('Error fetching community predictions:', err);
     }
-
-    const communityMap: Record<string, CommunityPrediction> = {};
-    data?.forEach((cp: any) => {
-      communityMap[cp.question_id] = cp;
-    });
-    setCommunityPredictions(communityMap);
   };
 
   const getUserPrediction = (questionId: string): Prediction | undefined => {
@@ -307,10 +328,11 @@ export default function Questions() {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'closing':
           return new Date(a.close_date).getTime() - new Date(b.close_date).getTime();
-        case 'predictions':
+        case 'predictions': {
           const aCount = communityPredictions[a.id]?.prediction_count || 0;
           const bCount = communityPredictions[b.id]?.prediction_count || 0;
           return bCount - aCount;
+        }
         default:
           return 0;
       }

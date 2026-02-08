@@ -29,11 +29,14 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (userId) {
-      loadProfile();
-      loadPredictions();
-    }
-  }, [userId]);
+    const loadData = async () => {
+      if (userId) {
+        await loadProfile();
+        await loadPredictions();
+      }
+    };
+    loadData();
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProfile = async () => {
     if (!userId) return;

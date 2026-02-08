@@ -11,10 +11,13 @@ export const Header = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
+    const loadData = async () => {
+      if (user) {
+        await loadProfile();
+      }
+    };
+    loadData();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProfile = async () => {
     if (!user) return;

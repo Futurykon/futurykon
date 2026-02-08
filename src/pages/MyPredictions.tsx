@@ -30,12 +30,15 @@ export default function MyPredictions() {
   });
 
   useEffect(() => {
-    if (!user) {
-      navigate('/signin');
-      return;
-    }
-    loadPredictions();
-  }, [user, navigate]);
+    const loadData = async () => {
+      if (!user) {
+        navigate('/signin');
+        return;
+      }
+      await loadPredictions();
+    };
+    loadData();
+  }, [user, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPredictions = async () => {
     if (!user) return;

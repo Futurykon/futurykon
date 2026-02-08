@@ -36,14 +36,17 @@ export default function Leaderboard() {
     }
 
     // Group by user and calculate average
-    const userMap = new Map<string, { scores: number[]; profile: any }>();
+    const userMap = new Map<string, {
+      scores: number[];
+      profile: { email?: string; display_name?: string } | undefined
+    }>();
 
     for (const row of data) {
       const userId = row.user_id;
       if (!userMap.has(userId)) {
         userMap.set(userId, {
           scores: [],
-          profile: row.profiles,
+          profile: (row as { profiles?: { email?: string; display_name?: string } }).profiles,
         });
       }
       if (row.brier_score !== null) {
