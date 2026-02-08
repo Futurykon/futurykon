@@ -1,10 +1,34 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { User, LogOut } from "lucide-react";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name, is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (data) {
+      setDisplayName(data.display_name);
+      setIsAdmin(data.is_admin || false);
+    }
+  };
 
   return (
     <header className="bg-white/70 backdrop-blur-md border-b border-white/30 sticky top-0 z-50">
@@ -18,15 +42,32 @@ export const Header = () => {
             <Link to="/questions" className="text-muted-foreground hover:text-foreground transition-colors">
               Pytania
             </Link>
-            <Link to="/ask" className="text-muted-foreground hover:text-foreground transition-colors">
-              Zadaj pytanie
+            <Link to="/leaderboard" className="text-muted-foreground hover:text-foreground transition-colors">
+              Ranking
             </Link>
+            {user && (
+              <>
+                <Link to="/my-predictions" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Moje predykcje
+                </Link>
+                {isAdmin ? (
+                  <Link to="/ask" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Zadaj pytanie
+                  </Link>
+                ) : (
+                  <Link to="/suggest" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Zaproponuj pytanie
+                  </Link>
+                )}
+              </>
+            )}
 
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {user.email}
-                </span>
+                <Link to="/edit-profile" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  {displayName || user.email}
+                </Link>
                 <Button variant="outline" size="sm" onClick={signOut}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Wyloguj

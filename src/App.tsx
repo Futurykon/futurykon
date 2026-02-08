@@ -7,7 +7,12 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import AskQuestion from "./pages/AskQuestion";
+import Suggest from "./pages/Suggest";
 import Questions from "./pages/Questions";
+import Profile from "./pages/Profile";
+import Leaderboard from "./pages/Leaderboard";
+import MyPredictions from "./pages/MyPredictions";
+import EditProfile from "./pages/EditProfile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
@@ -28,7 +33,24 @@ const App = () => (
                 <AskQuestion />
               </ProtectedRoute>
             } />
+            <Route path="/suggest" element={
+              <ProtectedRoute>
+                <Suggest />
+              </ProtectedRoute>
+            } />
             <Route path="/questions" element={<Questions />} />
+            <Route path="/profile/:userId" element={<Profile />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/my-predictions" element={
+              <ProtectedRoute>
+                <MyPredictions />
+              </ProtectedRoute>
+            } />
+            <Route path="/edit-profile" element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            } />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

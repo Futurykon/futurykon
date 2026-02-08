@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Brain, TrendingUp, Calendar as CalendarLucide, ShieldX } from "lucide-react";
+import { CalendarIcon, Brain, TrendingUp, Calendar as CalendarLucide, ShieldX, CheckCircle, XCircle } from "lucide-react";
+import { useEffect } from "react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CATEGORIES } from "@/lib/categories";
+import type { QuestionSuggestion } from "@/types";
 
 const AskQuestion = () => {
   const [question, setQuestion] = useState("");
@@ -24,22 +27,101 @@ const AskQuestion = () => {
   const [category, setCategory] = useState("");
   const [endDate, setEndDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suggestions, setSuggestions] = useState<QuestionSuggestion[]>([]);
 
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const categories = [
-    "AGI i Superinteligencja",
-    "Modele językowe",
-    "Robotyka",
-    "AI w medycynie",
-    "Autonomiczne pojazdy",
-    "AI w biznesie",
-    "Regulacje AI",
-    "Inne"
-  ];
+  useEffect(() => {
+    if (isAdmin) {
+      fetchSuggestions();
+    }
+  }, [isAdmin]);
+
+  const fetchSuggestions = async () => {
+    const { data, error } = await supabase
+      .from('question_suggestions')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setSuggestions(data);
+    }
+  };
+
+  const approveSuggestion = async (suggestion: QuestionSuggestion) => {
+    setIsSubmitting(true);
+
+    // Create the question
+    const { error: questionError } = await supabase.from('questions').insert({
+      title: suggestion.title,
+      description: suggestion.description,
+      resolution_criteria: suggestion.description || null,
+      category: suggestion.category,
+      close_date: suggestion.close_date,
+      author_id: user?.id
+    });
+
+    if (questionError) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się utworzyć pytania.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Mark suggestion as approved
+    const { error: updateError } = await supabase
+      .from('question_suggestions')
+      .update({ status: 'approved' })
+      .eq('id', suggestion.id);
+
+    if (updateError) {
+      toast({
+        title: "Uwaga",
+        description: "Pytanie utworzone, ale nie udało się zaktualizować statusu propozycji.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Sukces!",
+        description: "Pytanie zostało utworzone z propozycji."
+      });
+      fetchSuggestions();
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const rejectSuggestion = async (suggestionId: string) => {
+    setIsSubmitting(true);
+
+    const { error } = await supabase
+      .from('question_suggestions')
+      .update({ status: 'rejected' })
+      .eq('id', suggestionId);
+
+    if (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się odrzucić propozycji.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Sukces",
+        description: "Propozycja została odrzucona."
+      });
+      fetchSuggestions();
+    }
+
+    setIsSubmitting(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +151,7 @@ const AskQuestion = () => {
         title: question,
         description: description || null,
         resolution_criteria: description || null,
+        category: category,
         close_date: endDate.toISOString(),
         author_id: user.id
       });
@@ -196,7 +279,7 @@ const AskQuestion = () => {
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((cat) => (
+                        {CATEGORIES.map((cat) => (
                           <SelectItem key={cat} value={cat}>
                             {cat}
                           </SelectItem>
@@ -271,6 +354,60 @@ const AskQuestion = () => {
               </ul>
             </CardContent>
           </Card>
+
+          {/* Pending Suggestions (Admin only) */}
+          {suggestions.length > 0 && (
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle>Oczekujące propozycje ({suggestions.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {suggestions.map((suggestion) => (
+                    <div key={suggestion.id} className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-2">{suggestion.title}</h4>
+                      {suggestion.description && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {suggestion.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                        <span>Kategoria: {suggestion.category}</span>
+                        {suggestion.close_date && (
+                          <span>
+                            Rozstrzygnięcie: {format(new Date(suggestion.close_date), 'd MMM yyyy', { locale: pl })}
+                          </span>
+                        )}
+                        <span className="text-xs">
+                          {format(new Date(suggestion.created_at), 'd MMM yyyy', { locale: pl })}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => approveSuggestion(suggestion)}
+                          disabled={isSubmitting}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Zatwierdź
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => rejectSuggestion(suggestion.id)}
+                          disabled={isSubmitting}
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Odrzuć
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

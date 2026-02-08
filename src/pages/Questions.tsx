@@ -2,165 +2,25 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { CATEGORIES } from '@/lib/categories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, MessageSquare, TrendingUp, Users, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react';
-import { format, isToday, isThisYear } from 'date-fns';
+import { Calendar, Clock, Users, CheckCircle, XCircle, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Header } from '@/components/Header';
-
-function formatPredictionDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  if (isToday(date)) return format(date, 'HH:mm');
-  if (isThisYear(date)) return format(date, 'd MMM', { locale: pl });
-  return format(date, 'd MMM yyyy', { locale: pl });
-}
-
-interface UserPredictionGroup {
-  user_id: string;
-  user_email?: string;
-  latest: Prediction;
-  history: Prediction[]; // older predictions, newest first
-}
-
-function groupPredictionsByUser(preds: Prediction[]): UserPredictionGroup[] {
-  const map = new Map<string, Prediction[]>();
-  // preds are already sorted newest-first from the fetch
-  for (const p of preds) {
-    const arr = map.get(p.user_id);
-    if (arr) arr.push(p);
-    else map.set(p.user_id, [p]);
-  }
-  const groups: UserPredictionGroup[] = [];
-  for (const [userId, userPreds] of map) {
-    groups.push({
-      user_id: userId,
-      user_email: userPreds[0].user_email,
-      latest: userPreds[0],
-      history: userPreds.slice(1),
-    });
-  }
-  // Sort groups by latest prediction date, newest first
-  groups.sort((a, b) => new Date(b.latest.created_at).getTime() - new Date(a.latest.created_at).getTime());
-  return groups;
-}
-
-interface Question {
-  id: string;
-  title: string;
-  description: string;
-  resolution_criteria: string;
-  close_date: string;
-  created_at: string;
-  resolution_status: string;
-  resolution_date: string | null;
-  author_id: string | null;
-}
-
-interface Prediction {
-  id: string;
-  question_id: string;
-  user_id: string;
-  probability: number;
-  reasoning: string;
-  created_at: string;
-  user_email?: string;
-}
-
-interface CommunityPrediction {
-  question_id: string;
-  community_probability: number | null;
-  prediction_count: number;
-}
-
-function PredictionThread({ predictions, currentUserId }: { predictions: Prediction[]; currentUserId?: string }) {
-  const groups = groupPredictionsByUser(predictions);
-  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const uniqueUserCount = groups.length;
-
-  const toggleExpand = (userId: string) => {
-    setExpandedUsers((prev) => {
-      const next = new Set(prev);
-      if (next.has(userId)) next.delete(userId);
-      else next.add(userId);
-      return next;
-    });
-  };
-
-  return (
-    <div className="border-t pt-4">
-      <div className="flex items-center gap-2 mb-3">
-        <MessageSquare className="w-4 h-4 text-muted-foreground" />
-        <h4 className="font-medium text-sm">
-          Predykcje ({predictions.length} od {uniqueUserCount} {uniqueUserCount === 1 ? 'użytkownika' : 'użytkowników'})
-        </h4>
-      </div>
-      <div className="space-y-3">
-        {groups.map((group) => {
-          const isOwn = currentUserId === group.user_id;
-          const isExpanded = expandedUsers.has(group.user_id);
-          const hasHistory = group.history.length > 0;
-
-          return (
-            <div
-              key={group.user_id}
-              className={`p-3 rounded-lg text-sm ${isOwn ? 'bg-primary/5 border border-primary/20' : 'bg-muted/50'}`}
-            >
-              {/* Latest prediction */}
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    {group.user_email ?? 'Anonim'}
-                    {isOwn && <span className="text-primary ml-1">(Ty)</span>}
-                  </span>
-                  <span className="font-semibold text-primary">{group.latest.probability}%</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {formatPredictionDate(group.latest.created_at)}
-                </span>
-              </div>
-              {group.latest.reasoning && (
-                <p className="text-muted-foreground mt-1">{group.latest.reasoning}</p>
-              )}
-
-              {/* Expandable history */}
-              {hasHistory && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => toggleExpand(group.user_id)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    {group.history.length} wcześniejsz{group.history.length === 1 ? 'a aktualizacja' : 'ych aktualizacji'}
-                  </button>
-                  {isExpanded && (
-                    <div className="mt-2 space-y-2 border-l-2 border-muted pl-3">
-                      {group.history.map((pred) => (
-                        <div key={pred.id} className="text-xs text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{pred.probability}%</span>
-                            <span>{formatPredictionDate(pred.created_at)}</span>
-                          </div>
-                          {pred.reasoning && (
-                            <p className="mt-0.5">{pred.reasoning}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+import { PredictionThread } from '@/components/PredictionThread';
+import type { Question, Prediction, CommunityPrediction } from '@/types';
 
 export default function Questions() {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -171,6 +31,15 @@ export default function Questions() {
   const [reasoning, setReasoning] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCriteria, setEditCriteria] = useState('');
+  const [editCloseDate, setEditCloseDate] = useState<Date>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('newest');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -213,7 +82,7 @@ export default function Questions() {
   const fetchPredictions = async () => {
     const { data, error } = await supabase
       .from('predictions')
-      .select('*, profiles(email)')
+      .select('*, profiles(email, display_name)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -222,7 +91,7 @@ export default function Questions() {
     }
 
     const predictionMap: Record<string, Prediction[]> = {};
-    data?.forEach((row: Prediction) => {
+    data?.forEach((row: any) => {
       const prediction: Prediction = {
         id: row.id,
         question_id: row.question_id,
@@ -230,7 +99,7 @@ export default function Questions() {
         probability: row.probability,
         reasoning: row.reasoning,
         created_at: row.created_at,
-        user_email: row.profiles?.email ?? undefined,
+        profiles: row.profiles,
       };
       if (!predictionMap[prediction.question_id]) {
         predictionMap[prediction.question_id] = [];
@@ -242,7 +111,7 @@ export default function Questions() {
 
   const fetchCommunityPredictions = async () => {
     const { data, error } = await supabase
-      .from('community_predictions')
+      .from('community_predictions' as any)
       .select('question_id, community_probability, prediction_count');
 
     if (error) {
@@ -251,7 +120,7 @@ export default function Questions() {
     }
 
     const communityMap: Record<string, CommunityPrediction> = {};
-    data?.forEach((cp) => {
+    data?.forEach((cp: any) => {
       communityMap[cp.question_id] = cp;
     });
     setCommunityPredictions(communityMap);
@@ -339,6 +208,114 @@ export default function Questions() {
     setIsSubmitting(false);
   };
 
+  const startEditQuestion = (question: Question) => {
+    setEditingQuestion(question.id);
+    setEditTitle(question.title);
+    setEditDescription(question.description || '');
+    setEditCriteria(question.resolution_criteria || '');
+    setEditCloseDate(new Date(question.close_date));
+  };
+
+  const saveEditQuestion = async (questionId: string) => {
+    if (!editTitle || !editCloseDate) {
+      toast({
+        title: 'Błąd',
+        description: 'Tytuł i data zamknięcia są wymagane.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from('questions')
+      .update({
+        title: editTitle,
+        description: editDescription,
+        resolution_criteria: editCriteria,
+        close_date: editCloseDate.toISOString()
+      })
+      .eq('id', questionId);
+
+    if (error) {
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się zaktualizować pytania.',
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Sukces',
+        description: 'Pytanie zostało zaktualizowane!'
+      });
+      setEditingQuestion(null);
+      fetchQuestions();
+    }
+    setIsSubmitting(false);
+  };
+
+  const deleteQuestion = async (questionId: string) => {
+    if (!confirm('Czy na pewno chcesz usunąć to pytanie? Ta operacja jest nieodwracalna.')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from('questions')
+      .delete()
+      .eq('id', questionId);
+
+    if (error) {
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się usunąć pytania.',
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Sukces',
+        description: 'Pytanie zostało usunięte!'
+      });
+      fetchQuestions();
+    }
+    setIsSubmitting(false);
+  };
+
+  // Filter and sort questions
+  const filteredQuestions = questions
+    .filter((q) => {
+      // Text search
+      if (searchQuery && !q.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      // Category filter
+      if (categoryFilter !== 'all' && q.category !== categoryFilter) {
+        return false;
+      }
+      // Status filter
+      if (statusFilter === 'active' && (q.resolution_status !== 'pending' || isExpired(q.close_date))) {
+        return false;
+      }
+      if (statusFilter === 'resolved' && q.resolution_status === 'pending') {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'closing':
+          return new Date(a.close_date).getTime() - new Date(b.close_date).getTime();
+        case 'predictions':
+          const aCount = communityPredictions[a.id]?.prediction_count || 0;
+          const bCount = communityPredictions[b.id]?.prediction_count || 0;
+          return bCount - aCount;
+        default:
+          return 0;
+      }
+    });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-arctic/10 to-lavender/10">
       <Header />
@@ -350,8 +327,65 @@ export default function Questions() {
           </p>
         </div>
 
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Szukaj pytań..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                {/* Status tabs */}
+                <Tabs value={statusFilter} onValueChange={setStatusFilter} className="flex-1">
+                  <TabsList>
+                    <TabsTrigger value="all">Wszystkie</TabsTrigger>
+                    <TabsTrigger value="active">Aktywne</TabsTrigger>
+                    <TabsTrigger value="resolved">Rozstrzygnięte</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* Category filter */}
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Kategoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Wszystkie kategorie</SelectItem>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Sort */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Sortuj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Najnowsze</SelectItem>
+                    <SelectItem value="closing">Zamykane wkrótce</SelectItem>
+                    <SelectItem value="predictions">Najwięcej predykcji</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-6">
-          {questions.map((question) => {
+          {filteredQuestions.map((question) => {
             const userPrediction = getUserPrediction(question.id);
             const allPredictions = predictions[question.id] || [];
             const communityPrediction = communityPredictions[question.id];
@@ -362,28 +396,128 @@ export default function Questions() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-xl mb-2">{question.title}</CardTitle>
+                      <div className="flex items-center gap-2 mb-2">
+                        <CardTitle className="text-xl">{question.title}</CardTitle>
+                        {question.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {question.category}
+                          </Badge>
+                        )}
+                      </div>
                       <CardDescription className="text-base">
                         {question.description}
                       </CardDescription>
                     </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {format(new Date(question.close_date), 'd MMMM yyyy', { locale: pl })}
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            {format(new Date(question.close_date), 'd MMMM yyyy', { locale: pl })}
+                          </span>
+                        </div>
+                        {expired && (
+                          <div className="flex items-center gap-1 text-destructive">
+                            <Clock className="w-4 h-4" />
+                            <span>Zakończone</span>
+                          </div>
+                        )}
                       </div>
-                      {expired && (
-                        <div className="flex items-center gap-1 text-destructive">
-                          <Clock className="w-4 h-4" />
-                          <span>Zakończone</span>
+                      {isAdmin && (
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => startEditQuestion(question)}
+                            disabled={isSubmitting}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteQuestion(question.id)}
+                            disabled={isSubmitting}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Edit form */}
+                  {editingQuestion === question.id && (
+                    <div className="mb-6 p-4 bg-muted/30 rounded-lg space-y-4">
+                      <h4 className="font-semibold">Edytuj pytanie</h4>
+                      <div className="space-y-2">
+                        <Label>Tytuł</Label>
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Opis</Label>
+                        <Textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Kryteria rozstrzygnięcia</Label>
+                        <Textarea
+                          value={editCriteria}
+                          onChange={(e) => setEditCriteria(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data zamknięcia</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !editCloseDate && "text-muted-foreground"
+                              )}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {editCloseDate ? format(editCloseDate, "dd MMMM yyyy", { locale: pl }) : "Wybierz datę"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <CalendarComponent
+                              mode="single"
+                              selected={editCloseDate}
+                              onSelect={setEditCloseDate}
+                              locale={pl}
+                              disabled={(date) => date < new Date()}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => saveEditQuestion(question.id)}
+                          disabled={isSubmitting}
+                        >
+                          Zapisz zmiany
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditingQuestion(null)}
+                          disabled={isSubmitting}
+                        >
+                          Anuluj
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div className="mb-4">
                     <h4 className="font-medium mb-2">Kryteria rozstrzygnięcia:</h4>
                     <p className="text-sm text-muted-foreground">{question.resolution_criteria}</p>
