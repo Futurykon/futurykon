@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useAuth } from "@/hooks/useAuth";
 import {
   TrendingUp,
   Users,
@@ -23,6 +25,14 @@ import {
   Zap
 } from "lucide-react";
 const Index = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/questions');
+    }
+  }, [user, navigate]);
 
   const howItWorksSteps = [
     {
@@ -158,7 +168,10 @@ const Index = () => {
 
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white drop-shadow-lg">
+            <div className="text-6xl md:text-8xl font-bold mb-8 text-white drop-shadow-2xl tracking-wider">
+              FUTURYKON
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white drop-shadow-lg">
               Przewiduj rozwój AI.<br />Kształtuj przyszłość technologii.
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-8 font-serif max-w-3xl mx-auto drop-shadow">

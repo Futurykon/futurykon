@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, MessageSquare, TrendingUp, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, TrendingUp, Users, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react';
 import { format, isToday, isThisYear } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Header } from '@/components/Header';
@@ -56,6 +56,9 @@ interface Question {
   resolution_criteria: string;
   close_date: string;
   created_at: string;
+  resolution_status: string;
+  resolution_date: string | null;
+  author_id: string | null;
 }
 
 interface Prediction {
@@ -167,6 +170,7 @@ export default function Questions() {
   const [probability, setProbability] = useState([50]);
   const [reasoning, setReasoning] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -174,7 +178,23 @@ export default function Questions() {
     fetchQuestions();
     fetchPredictions();
     fetchCommunityPredictions();
+    if (user) {
+      checkAdminStatus();
+    }
   }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setIsAdmin(data.is_admin || false);
+    }
+  };
 
   const fetchQuestions = async () => {
     const { data, error } = await supabase
@@ -293,6 +313,32 @@ export default function Questions() {
     return new Date(closeDate) < new Date();
   };
 
+  const resolveQuestion = async (questionId: string, outcome: 'yes' | 'no') => {
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from('questions')
+      .update({
+        resolution_status: outcome,
+        resolution_date: new Date().toISOString()
+      })
+      .eq('id', questionId);
+
+    if (error) {
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się rozstrzygnąć pytania.',
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Sukces',
+        description: `Pytanie rozstrzygnięte jako ${outcome === 'yes' ? 'TAK' : 'NIE'}!`
+      });
+      fetchQuestions();
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-arctic/10 to-lavender/10">
       <Header />
@@ -342,6 +388,60 @@ export default function Questions() {
                     <h4 className="font-medium mb-2">Kryteria rozstrzygnięcia:</h4>
                     <p className="text-sm text-muted-foreground">{question.resolution_criteria}</p>
                   </div>
+
+                  {/* Resolution status */}
+                  {question.resolution_status !== 'pending' && (
+                    <div className={`mb-4 p-4 rounded-lg border-2 ${
+                      question.resolution_status === 'yes'
+                        ? 'bg-green-50 border-green-500'
+                        : 'bg-red-50 border-red-500'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {question.resolution_status === 'yes' ? (
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        ) : (
+                          <XCircle className="w-6 h-6 text-red-600" />
+                        )}
+                        <div>
+                          <div className={`font-bold text-lg ${
+                            question.resolution_status === 'yes' ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                            Rozstrzygnięto: {question.resolution_status === 'yes' ? 'TAK' : 'NIE'}
+                          </div>
+                          {question.resolution_date && (
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(question.resolution_date), 'd MMMM yyyy', { locale: pl })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resolution buttons for admins */}
+                  {isAdmin && expired && question.resolution_status === 'pending' && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+                      <h4 className="font-medium mb-3 text-amber-900">Rozstrzygnij pytanie (admin):</h4>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => resolveQuestion(question.id, 'yes')}
+                          disabled={isSubmitting}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Rozstrzygnij jako TAK
+                        </Button>
+                        <Button
+                          onClick={() => resolveQuestion(question.id, 'no')}
+                          disabled={isSubmitting}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Rozstrzygnij jako NIE
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   {communityPrediction && communityPrediction.prediction_count > 0 && (
                     <div className="mb-4 bg-magenta/5 border border-magenta/20 p-4 rounded-lg">
