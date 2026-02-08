@@ -222,7 +222,7 @@ export default function Questions() {
     }
 
     const predictionMap: Record<string, Prediction[]> = {};
-    data?.forEach((row: any) => {
+    data?.forEach((row: Prediction) => {
       const prediction: Prediction = {
         id: row.id,
         question_id: row.question_id,
