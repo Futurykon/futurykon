@@ -17,6 +17,24 @@ interface ChartDataPoint {
 }
 
 export function PredictionHistoryChart({ predictions, questionTitle }: PredictionHistoryChartProps) {
+  // Calculate geometric mean of odds - defined before useMemo to avoid hoisting issues
+  const calculateCommunityPrediction = (probabilities: number[]): number => {
+    if (probabilities.length === 0) return 50;
+
+    // Clamp to [0.01, 99.99] to avoid ln(0)
+    const clampedProbs = probabilities.map((p) => Math.max(0.01, Math.min(99.99, p)));
+
+    // Convert to odds, take geometric mean, convert back
+    const avgLnP = clampedProbs.reduce((sum, p) => sum + Math.log(p / 100), 0) / clampedProbs.length;
+    const avgLn1MinusP =
+      clampedProbs.reduce((sum, p) => sum + Math.log(1 - p / 100), 0) / clampedProbs.length;
+
+    const numerator = Math.exp(avgLnP);
+    const denominator = numerator + Math.exp(avgLn1MinusP);
+
+    return (numerator / denominator) * 100;
+  };
+
   const chartData = useMemo(() => {
     // Group predictions by user and get only latest per user at each point in time
     const sortedPredictions = [...predictions].sort(
@@ -44,24 +62,6 @@ export function PredictionHistoryChart({ predictions, questionTitle }: Predictio
 
     return dataPoints;
   }, [predictions]);
-
-  // Calculate geometric mean of odds
-  const calculateCommunityPrediction = (probabilities: number[]): number => {
-    if (probabilities.length === 0) return 50;
-
-    // Clamp to [0.01, 99.99] to avoid ln(0)
-    const clampedProbs = probabilities.map((p) => Math.max(0.01, Math.min(99.99, p)));
-
-    // Convert to odds, take geometric mean, convert back
-    const avgLnP = clampedProbs.reduce((sum, p) => sum + Math.log(p / 100), 0) / clampedProbs.length;
-    const avgLn1MinusP =
-      clampedProbs.reduce((sum, p) => sum + Math.log(1 - p / 100), 0) / clampedProbs.length;
-
-    const numerator = Math.exp(avgLnP);
-    const denominator = numerator + Math.exp(avgLn1MinusP);
-
-    return (numerator / denominator) * 100;
-  };
 
   if (chartData.length === 0) {
     return (
