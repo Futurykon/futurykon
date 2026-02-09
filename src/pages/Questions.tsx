@@ -84,18 +84,22 @@ export default function Questions() {
   };
 
   const fetchPredictions = async () => {
+    console.log('🔍 Fetching predictions...');
     const { data, error } = await supabase
       .from('predictions')
       .select('*, profiles(email, display_name)')
       .order('created_at', { ascending: false });
 
+    console.log('📊 Predictions query result:', { data, error, count: data?.length });
+
     if (error) {
-      console.error('Error fetching predictions:', error);
+      console.error('❌ Error fetching predictions:', error);
       return;
     }
 
     const predictionMap: Record<string, Prediction[]> = {};
     if (data) {
+      console.log('✅ Processing', data.length, 'prediction records');
       for (const row of data) {
         const prediction: Prediction = {
           id: row.id,
@@ -111,6 +115,7 @@ export default function Questions() {
         }
         predictionMap[prediction.question_id].push(prediction);
       }
+      console.log('📦 Prediction map built:', Object.keys(predictionMap).length, 'questions with predictions');
     }
     setPredictions(predictionMap);
   };
