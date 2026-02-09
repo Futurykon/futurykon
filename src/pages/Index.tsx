@@ -183,10 +183,10 @@ const Index = () => {
               </Button>
 
               <div className="flex gap-4">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm" asChild>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white hover:text-magenta backdrop-blur-sm transition-all duration-300" asChild>
                   <a href="/questions">Rób predykcje</a>
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white backdrop-blur-sm" asChild>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white hover:text-magenta backdrop-blur-sm transition-all duration-300" asChild>
                   <a href="/ask">Zadaj pytanie</a>
                 </Button>
               </div>
@@ -370,7 +370,7 @@ const Index = () => {
               <Link to="/signup">Załóż konto</Link>
             </Button>
 
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white/20 hover:text-white">
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4 rounded-xl border-white/50 text-white hover:bg-white hover:text-magenta transition-all duration-300">
               Przeglądaj rynki
             </Button>
           </div>
