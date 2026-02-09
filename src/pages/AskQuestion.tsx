@@ -4,14 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Brain, TrendingUp, Calendar as CalendarLucide, ShieldX, CheckCircle, XCircle } from "lucide-react";
+import { Brain, TrendingUp, Calendar as CalendarLucide, ShieldX, CheckCircle, XCircle } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -293,30 +291,12 @@ const AskQuestion = () => {
 
                   <div className="space-y-2">
                     <Label>Data rozstrzygnięcia*</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !endDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {endDate ? format(endDate, "dd MMMM yyyy", { locale: pl }) : "Wybierz datę"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                          initialFocus
-                          locale={pl}
-                          disabled={(date) => date < new Date()}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker
+                      date={endDate}
+                      onDateChange={setEndDate}
+                      disabled={(date) => date < new Date()}
+                      placeholder="Wybierz datę rozstrzygnięcia"
+                    />
                     <p className="text-sm text-muted-foreground">
                       Kiedy pytanie zostanie rozstrzygnięte?
                     </p>

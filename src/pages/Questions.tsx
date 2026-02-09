@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -505,29 +504,12 @@ export default function Questions() {
                       </div>
                       <div className="space-y-2">
                         <Label>Data zamknięcia</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !editCloseDate && "text-muted-foreground"
-                              )}
-                            >
-                              <Calendar className="mr-2 h-4 w-4" />
-                              {editCloseDate ? format(editCloseDate, "dd MMMM yyyy", { locale: pl }) : "Wybierz datę"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <CalendarComponent
-                              mode="single"
-                              selected={editCloseDate}
-                              onSelect={setEditCloseDate}
-                              locale={pl}
-                              disabled={(date) => date < new Date()}
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <DatePicker
+                          date={editCloseDate}
+                          onDateChange={setEditCloseDate}
+                          disabled={(date) => date < new Date()}
+                          placeholder="Wybierz datę zamknięcia"
+                        />
                       </div>
                       <div className="flex gap-2">
                         <Button
