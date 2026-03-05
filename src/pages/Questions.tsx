@@ -214,7 +214,7 @@ export default function Questions() {
     setEditDescription(question.description || '');
     setEditCriteria(question.resolution_criteria || '');
     setEditCloseDate(new Date(question.close_date));
-    setEditCategory(question.category || '');
+    setEditCategory(question.category || '__none__');
   };
 
   const saveEditQuestion = async (questionId: string) => {
@@ -233,7 +233,7 @@ export default function Questions() {
       description: editDescription,
       resolution_criteria: editCriteria,
       close_date: editCloseDate.toISOString(),
-      category: editCategory || null,
+      category: editCategory && editCategory !== '__none__' ? editCategory : null,
     });
 
     if (error) {
@@ -486,7 +486,7 @@ export default function Questions() {
                             <SelectValue placeholder="Wybierz kategorię" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Brak kategorii</SelectItem>
+                            <SelectItem value="__none__">Brak kategorii</SelectItem>
                             {categories.map((cat) => (
                               <SelectItem key={cat.id} value={cat.name}>
                                 <span className="flex items-center gap-2">
