@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { getProfile } from '@/services/profiles';
+import { getQuestionsByIds } from '@/services/questions';
+import { getUserPredictions } from '@/services/predictions';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,11 +43,7 @@ export default function Profile() {
   const loadProfile = async () => {
     if (!userId) return;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await getProfile(userId);
 
     if (!error && data) {
       setProfile(data);
@@ -56,11 +54,7 @@ export default function Profile() {
     if (!userId) return;
 
     // Fetch all predictions for this user
-    const { data: predictions, error } = await supabase
-      .from('predictions')
-      .select('*, profiles(email, display_name)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    const { data: predictions, error } = await getUserPredictions(userId);
 
     if (error || !predictions) {
       setLoading(false);
@@ -84,10 +78,7 @@ export default function Profile() {
 
     // Fetch question details
     const questionIds = Array.from(questionMap.keys());
-    const { data: questions } = await supabase
-      .from('questions')
-      .select('*')
-      .in('id', questionIds);
+    const { data: questions } = await getQuestionsByIds(questionIds);
 
     if (!questions) {
       setLoading(false);

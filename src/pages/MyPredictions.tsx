@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { getQuestionsByIds } from '@/services/questions';
+import { getMyPredictions } from '@/services/predictions';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,11 +45,7 @@ export default function MyPredictions() {
     if (!user) return;
 
     // Fetch all user's predictions
-    const { data: predictions, error } = await supabase
-      .from('predictions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    const { data: predictions, error } = await getMyPredictions(user.id);
 
     if (error || !predictions) {
       setLoading(false);
@@ -66,10 +63,7 @@ export default function MyPredictions() {
 
     // Fetch questions
     const questionIds = Array.from(questionMap.keys());
-    const { data: questions } = await supabase
-      .from('questions')
-      .select('*')
-      .in('id', questionIds);
+    const { data: questions } = await getQuestionsByIds(questionIds);
 
     if (!questions) {
       setLoading(false);

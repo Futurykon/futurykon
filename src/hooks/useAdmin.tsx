@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { getIsAdmin } from '@/services/profiles';
 
 interface UseAdminResult {
   isAdmin: boolean;
@@ -21,11 +21,7 @@ export const useAdmin = (): UseAdminResult => {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', user.id)
-          .single();
+        const { data, error } = await getIsAdmin(user.id);
 
         if (error) {
           console.error('Error checking admin status:', error);

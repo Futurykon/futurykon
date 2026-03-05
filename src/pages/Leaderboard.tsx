@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { getPredictionsWithBrierScores } from '@/services/predictions';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,10 +25,7 @@ export default function Leaderboard() {
 
   const loadLeaderboard = async () => {
     // Query predictions with Brier scores, join with profiles
-    const { data, error } = await supabase
-      .from('predictions')
-      .select('user_id, brier_score, profiles(email, display_name)')
-      .not('brier_score', 'is', null);
+    const { data, error } = await getPredictionsWithBrierScores();
 
     if (error || !data) {
       setLoading(false);

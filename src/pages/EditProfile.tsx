@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { getDisplayName, updateDisplayName } from '@/services/profiles';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,11 +32,7 @@ export default function EditProfile() {
   const loadProfile = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single();
+    const { data, error } = await getDisplayName(user.id);
 
     if (error) {
       console.error('Error loading profile:', error);
@@ -51,10 +47,7 @@ export default function EditProfile() {
     if (!user) return;
 
     setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ display_name: displayName || null })
-      .eq('id', user.id);
+    const { error } = await updateDisplayName(user.id, displayName || null);
 
     if (error) {
       toast({

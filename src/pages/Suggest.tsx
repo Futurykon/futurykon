@@ -12,7 +12,7 @@ import { pl } from "date-fns/locale";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { createSuggestion } from "@/services/questionSuggestions";
 import { useToast } from "@/hooks/use-toast";
 import { CATEGORIES } from "@/lib/categories";
 
@@ -52,12 +52,12 @@ const Suggest = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('question_suggestions').insert({
+      const { error } = await createSuggestion({
         title: question,
         description: description || null,
         category: category,
         close_date: endDate.toISOString(),
-        suggested_by: user.id
+        suggested_by: user.id,
       });
 
       if (error) {

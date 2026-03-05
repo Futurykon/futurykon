@@ -14,7 +14,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { createQuestion } from "@/services/questions";
+import { getPendingSuggestions, approveSuggestion as approveSug, rejectSuggestion as rejectSug } from "@/services/questionSuggestions";
 import { useToast } from "@/hooks/use-toast";
 import { CATEGORIES } from "@/lib/categories";
 import type { QuestionSuggestion } from "@/types";
@@ -42,11 +43,7 @@ const AskQuestion = () => {
   }, [isAdmin]);
 
   const fetchSuggestions = async () => {
-    const { data, error } = await supabase
-      .from('question_suggestions')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+    const { data, error } = await getPendingSuggestions();
 
     if (!error && data) {
       setSuggestions(data as QuestionSuggestion[]);
@@ -57,13 +54,13 @@ const AskQuestion = () => {
     setIsSubmitting(true);
 
     // Create the question
-    const { error: questionError } = await supabase.from('questions').insert({
+    const { error: questionError } = await createQuestion({
       title: suggestion.title,
       description: suggestion.description,
       resolution_criteria: suggestion.description || null,
-      category: suggestion.category,
-      close_date: suggestion.close_date,
-      author_id: user?.id
+      category: suggestion.category ?? '',
+      close_date: suggestion.close_date ?? '',
+      author_id: user?.id,
     });
 
     if (questionError) {
@@ -77,10 +74,7 @@ const AskQuestion = () => {
     }
 
     // Mark suggestion as approved
-    const { error: updateError } = await supabase
-      .from('question_suggestions')
-      .update({ status: 'approved' })
-      .eq('id', suggestion.id);
+    const { error: updateError } = await approveSug(suggestion.id);
 
     if (updateError) {
       toast({
@@ -102,10 +96,7 @@ const AskQuestion = () => {
   const rejectSuggestion = async (suggestionId: string) => {
     setIsSubmitting(true);
 
-    const { error } = await supabase
-      .from('question_suggestions')
-      .update({ status: 'rejected' })
-      .eq('id', suggestionId);
+    const { error } = await rejectSug(suggestionId);
 
     if (error) {
       toast({
@@ -148,13 +139,13 @@ const AskQuestion = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('questions').insert({
+      const { error } = await createQuestion({
         title: question,
         description: description || null,
         resolution_criteria: description || null,
         category: category,
         close_date: endDate.toISOString(),
-        author_id: user.id
+        author_id: user.id,
       });
 
       if (error) {

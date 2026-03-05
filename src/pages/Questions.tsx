@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getIsAdmin } from '@/services/profiles';
+import { getQuestions, resolveQuestion as resolveQ, editQuestion as editQ, deleteQuestion as deleteQ } from '@/services/questions';
+import { getAllPredictions, createPrediction } from '@/services/predictions';
+import { getCommunityPredictions } from '@/services/communityPredictions';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -57,22 +60,14 @@ export default function Questions() {
 
   const checkAdminStatus = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
+    const { data, error } = await getIsAdmin(user.id);
     if (!error && data) {
       setIsAdmin(data.is_admin || false);
     }
   };
 
   const fetchQuestions = async () => {
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await getQuestions();
 
     if (error) {
       console.error('Error fetching questions:', error);
@@ -84,10 +79,7 @@ export default function Questions() {
 
   const fetchPredictions = async () => {
     console.log('🔍 Fetching predictions...');
-    const { data, error } = await supabase
-      .from('predictions')
-      .select('*, profiles(email, display_name)')
-      .order('created_at', { ascending: false });
+    const { data, error } = await getAllPredictions();
 
     console.log('📊 Predictions query result:', { data, error, count: data?.length });
 
@@ -121,19 +113,7 @@ export default function Questions() {
 
   const fetchCommunityPredictions = async () => {
     try {
-      // Cast to unknown first, then to our expected type to bypass Supabase type checking
-      const result = await supabase
-        .from('community_predictions' as never)
-        .select('question_id, community_probability, prediction_count') as unknown as {
-          data: Array<{
-            question_id: string;
-            community_probability: number | null;
-            prediction_count: number;
-          }> | null;
-          error: Error | null;
-        };
-
-      const { data, error } = result;
+      const { data, error } = await getCommunityPredictions();
 
       if (error) {
         console.error('Error fetching community predictions:', error);
@@ -179,9 +159,7 @@ export default function Questions() {
       reasoning: reasoning
     };
 
-    const { error } = await supabase
-      .from('predictions')
-      .insert(predictionData);
+    const { error } = await createPrediction(predictionData);
 
     if (error) {
       toast({
@@ -210,13 +188,7 @@ export default function Questions() {
 
   const resolveQuestion = async (questionId: string, outcome: 'yes' | 'no') => {
     setIsSubmitting(true);
-    const { error } = await supabase
-      .from('questions')
-      .update({
-        resolution_status: outcome,
-        resolution_date: new Date().toISOString()
-      })
-      .eq('id', questionId);
+    const { error } = await resolveQ(questionId, outcome);
 
     if (error) {
       toast({
@@ -253,15 +225,12 @@ export default function Questions() {
     }
 
     setIsSubmitting(true);
-    const { error } = await supabase
-      .from('questions')
-      .update({
-        title: editTitle,
-        description: editDescription,
-        resolution_criteria: editCriteria,
-        close_date: editCloseDate.toISOString()
-      })
-      .eq('id', questionId);
+    const { error } = await editQ(questionId, {
+      title: editTitle,
+      description: editDescription,
+      resolution_criteria: editCriteria,
+      close_date: editCloseDate.toISOString(),
+    });
 
     if (error) {
       toast({
@@ -286,10 +255,7 @@ export default function Questions() {
     }
 
     setIsSubmitting(true);
-    const { error } = await supabase
-      .from('questions')
-      .delete()
-      .eq('id', questionId);
+    const { error } = await deleteQ(questionId);
 
     if (error) {
       toast({
