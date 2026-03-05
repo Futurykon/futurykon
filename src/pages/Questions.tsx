@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { CATEGORIES } from '@/lib/categories';
+import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,12 +39,14 @@ export default function Questions() {
   const [editDescription, setEditDescription] = useState('');
   const [editCriteria, setEditCriteria] = useState('');
   const [editCloseDate, setEditCloseDate] = useState<Date>();
+  const [editCategory, setEditCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const { toast } = useToast();
   const { user } = useAuth();
+  const { categories } = useCategories();
 
   useEffect(() => {
     const loadData = async () => {
@@ -212,6 +214,7 @@ export default function Questions() {
     setEditDescription(question.description || '');
     setEditCriteria(question.resolution_criteria || '');
     setEditCloseDate(new Date(question.close_date));
+    setEditCategory(question.category || '');
   };
 
   const saveEditQuestion = async (questionId: string) => {
@@ -230,6 +233,7 @@ export default function Questions() {
       description: editDescription,
       resolution_criteria: editCriteria,
       close_date: editCloseDate.toISOString(),
+      category: editCategory || null,
     });
 
     if (error) {
@@ -353,9 +357,9 @@ export default function Questions() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Wszystkie kategorie</SelectItem>
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -391,11 +395,18 @@ export default function Questions() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <CardTitle className="text-xl">{question.title}</CardTitle>
-                        {question.category && (
-                          <Badge variant="secondary" className="text-xs">
-                            {question.category}
-                          </Badge>
-                        )}
+                        {question.category && (() => {
+                          const color = categories.find((c) => c.name === question.category)?.color;
+                          return (
+                            <Badge
+                              className="text-xs border-0 text-white"
+                              style={color ? { backgroundColor: color } : undefined}
+                              variant={color ? undefined : 'secondary'}
+                            >
+                              {question.category}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       <CardDescription className="text-base">
                         {question.description}
@@ -467,6 +478,25 @@ export default function Questions() {
                           onChange={(e) => setEditCriteria(e.target.value)}
                           rows={3}
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Kategoria</Label>
+                        <Select value={editCategory} onValueChange={setEditCategory}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Wybierz kategorię" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Brak kategorii</SelectItem>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.name}>
+                                <span className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                                  {cat.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Data zamknięcia</Label>

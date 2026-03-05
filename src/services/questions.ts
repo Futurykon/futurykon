@@ -28,7 +28,7 @@ export function resolveQuestion(questionId: string, outcome: 'yes' | 'no') {
 
 export function editQuestion(
   questionId: string,
-  data: { title: string; description: string; resolution_criteria: string; close_date: string },
+  data: { title: string; description: string; resolution_criteria: string; close_date: string; category: string | null },
 ) {
   return supabase.from('questions').update(data).eq('id', questionId);
 }

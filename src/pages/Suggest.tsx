@@ -14,7 +14,7 @@ import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { createSuggestion } from "@/services/questionSuggestions";
 import { useToast } from "@/hooks/use-toast";
-import { CATEGORIES } from "@/lib/categories";
+import { useCategories } from "@/hooks/useCategories";
 
 const Suggest = () => {
   const [question, setQuestion] = useState("");
@@ -24,6 +24,7 @@ const Suggest = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { user } = useAuth();
+  const { categories } = useCategories();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -144,9 +145,9 @@ const Suggest = () => {
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
                       <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

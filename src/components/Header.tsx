@@ -54,9 +54,14 @@ export const Header = () => {
                   Moje predykcje
                 </Link>
                 {isAdmin ? (
-                  <Link to="/ask" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Zadaj pytanie
-                  </Link>
+                  <>
+                    <Link to="/ask" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Zadaj pytanie
+                    </Link>
+                    <Link to="/admin/categories" className="text-muted-foreground hover:text-foreground transition-colors">
+                      Kategorie
+                    </Link>
+                  </>
                 ) : (
                   <Link to="/suggest" className="text-muted-foreground hover:text-foreground transition-colors">
                     Zaproponuj pytanie

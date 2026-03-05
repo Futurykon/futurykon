@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import MyPredictions from "./pages/MyPredictions";
 import EditProfile from "./pages/EditProfile";
+import AdminCategories from "./pages/AdminCategories";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
@@ -49,6 +50,11 @@ const App = () => (
             <Route path="/edit-profile" element={
               <ProtectedRoute>
                 <EditProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/categories" element={
+              <ProtectedRoute>
+                <AdminCategories />
               </ProtectedRoute>
             } />
             <Route path="/signin" element={<SignIn />} />

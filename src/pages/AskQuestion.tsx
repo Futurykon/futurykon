@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { createQuestion } from "@/services/questions";
 import { getPendingSuggestions, approveSuggestion as approveSug, rejectSuggestion as rejectSug } from "@/services/questionSuggestions";
 import { useToast } from "@/hooks/use-toast";
-import { CATEGORIES } from "@/lib/categories";
+import { useCategories } from "@/hooks/useCategories";
 import type { QuestionSuggestion } from "@/types";
 
 const AskQuestion = () => {
@@ -30,6 +30,7 @@ const AskQuestion = () => {
 
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
+  const { categories } = useCategories();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -271,9 +272,9 @@ const AskQuestion = () => {
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
                       <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
