@@ -21,6 +21,7 @@ import { Calendar, Clock, Users, CheckCircle, XCircle, Edit, Trash2, Search, Fil
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Header } from '@/components/Header';
+import { TagMultiSelect } from '@/components/TagMultiSelect';
 import { PredictionThread } from '@/components/PredictionThread';
 import { PredictionHistoryChart } from '@/components/PredictionHistoryChart';
 import type { Question, Prediction, CommunityPrediction } from '@/types';
@@ -39,7 +40,7 @@ export default function Questions() {
   const [editDescription, setEditDescription] = useState('');
   const [editCriteria, setEditCriteria] = useState('');
   const [editCloseDate, setEditCloseDate] = useState<Date>();
-  const [editCategory, setEditCategory] = useState<string>('');
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -214,7 +215,7 @@ export default function Questions() {
     setEditDescription(question.description || '');
     setEditCriteria(question.resolution_criteria || '');
     setEditCloseDate(new Date(question.close_date));
-    setEditCategory(question.category || '__none__');
+    setEditTags(question.tags || []);
   };
 
   const saveEditQuestion = async (questionId: string) => {
@@ -233,7 +234,7 @@ export default function Questions() {
       description: editDescription,
       resolution_criteria: editCriteria,
       close_date: editCloseDate.toISOString(),
-      category: editCategory && editCategory !== '__none__' ? editCategory : null,
+      tags: editTags,
     });
 
     if (error) {
@@ -285,7 +286,7 @@ export default function Questions() {
         return false;
       }
       // Category filter
-      if (categoryFilter !== 'all' && q.category !== categoryFilter) {
+      if (categoryFilter !== 'all' && !(q.tags || []).includes(categoryFilter)) {
         return false;
       }
       // Status filter
@@ -395,18 +396,19 @@ export default function Questions() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <CardTitle className="text-xl">{question.title}</CardTitle>
-                        {question.category && (() => {
-                          const color = categories.find((c) => c.name === question.category)?.color;
+                        {(question.tags || []).map((tag) => {
+                          const color = categories.find((c) => c.name === tag)?.color;
                           return (
                             <Badge
+                              key={tag}
                               className="text-xs border-0 text-white"
                               style={color ? { backgroundColor: color } : undefined}
                               variant={color ? undefined : 'secondary'}
                             >
-                              {question.category}
+                              {tag}
                             </Badge>
                           );
-                        })()}
+                        })}
                       </div>
                       <CardDescription className="text-base">
                         {question.description}
@@ -480,23 +482,13 @@ export default function Questions() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Kategoria</Label>
-                        <Select value={editCategory} onValueChange={setEditCategory}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Wybierz kategorię" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">Brak kategorii</SelectItem>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.name}>
-                                <span className="flex items-center gap-2">
-                                  <span className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                                  {cat.name}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Tagi</Label>
+                        <TagMultiSelect
+                          categories={categories}
+                          value={editTags}
+                          onChange={setEditTags}
+                          placeholder="Wybierz tagi..."
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Data zamknięcia</Label>

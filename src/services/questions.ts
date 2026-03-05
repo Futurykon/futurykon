@@ -12,7 +12,7 @@ export function createQuestion(data: {
   title: string;
   description: string | null;
   resolution_criteria: string | null;
-  category: string;
+  tags: string[];
   close_date: string;
   author_id: string | undefined;
 }) {
@@ -28,7 +28,7 @@ export function resolveQuestion(questionId: string, outcome: 'yes' | 'no') {
 
 export function editQuestion(
   questionId: string,
-  data: { title: string; description: string; resolution_criteria: string; close_date: string; category: string | null },
+  data: { title: string; description: string; resolution_criteria: string; close_date: string; tags: string[] },
 ) {
   return supabase.from('questions').update(data).eq('id', questionId);
 }

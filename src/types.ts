@@ -10,7 +10,7 @@ export interface Question {
   resolution_status: string;
   resolution_date: string | null;
   author_id: string | null;
-  category?: string | null;
+  tags: string[];
 }
 
 export interface Prediction {

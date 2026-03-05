@@ -11,6 +11,7 @@ import { User, TrendingUp, Target, Calendar, CheckCircle, XCircle, Clock } from 
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { Prediction, Question } from '@/types';
+import { useCategories } from '@/hooks/useCategories';
 
 interface QuestionWithPrediction {
   question: Question;
@@ -21,6 +22,7 @@ interface QuestionWithPrediction {
 export default function MyPredictions() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { categories } = useCategories();
   const [questionPredictions, setQuestionPredictions] = useState<QuestionWithPrediction[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -229,11 +231,19 @@ export default function MyPredictions() {
                             {question.title}
                           </Link>
                           <div className="flex items-center gap-2 ml-2">
-                            {question.category && (
-                              <Badge variant="secondary" className="text-xs">
-                                {question.category}
-                              </Badge>
-                            )}
+                            {(question.tags || []).map((tag) => {
+                              const color = categories.find((c) => c.name === tag)?.color;
+                              return (
+                                <Badge
+                                  key={tag}
+                                  className="text-xs border-0 text-white"
+                                  style={color ? { backgroundColor: color } : undefined}
+                                  variant={color ? undefined : 'secondary'}
+                                >
+                                  {tag}
+                                </Badge>
+                              );
+                            })}
                             {isResolved ? (
                               <Badge
                                 variant={question.resolution_status === 'yes' ? 'default' : 'secondary'}

@@ -12,6 +12,7 @@ import { User, TrendingUp, Target, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { Prediction, Question, Profile as ProfileType } from '@/types';
+import { useCategories } from '@/hooks/useCategories';
 
 interface QuestionWithPredictions {
   question: Question;
@@ -21,6 +22,7 @@ interface QuestionWithPredictions {
 export default function Profile() {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  const { categories } = useCategories();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [questionPredictions, setQuestionPredictions] = useState<QuestionWithPredictions[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,11 +242,19 @@ export default function Profile() {
                           >
                             {question.title}
                           </Link>
-                          {question.category && (
-                            <Badge variant="secondary" className="text-xs ml-2">
-                              {question.category}
-                            </Badge>
-                          )}
+                          {(question.tags || []).map((tag) => {
+                            const color = categories.find((c) => c.name === tag)?.color;
+                            return (
+                              <Badge
+                                key={tag}
+                                className="text-xs ml-1 border-0 text-white"
+                                style={color ? { backgroundColor: color } : undefined}
+                                variant={color ? undefined : 'secondary'}
+                              >
+                                {tag}
+                              </Badge>
+                            );
+                          })}
                         </div>
 
                         <div className="flex items-center gap-4 text-sm">
