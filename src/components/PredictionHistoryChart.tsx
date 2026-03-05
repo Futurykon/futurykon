@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format } from 'date-fns';
+import { format, startOfDay, eachDayOfInterval } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { Prediction } from '@/types';
 
@@ -63,6 +63,13 @@ export function PredictionHistoryChart({ predictions, questionTitle }: Predictio
     return dataPoints;
   }, [predictions]);
 
+  const dailyTicks = useMemo(() => {
+    if (chartData.length < 2) return [];
+    const start = startOfDay(new Date(chartData[0].timestamp));
+    const end = startOfDay(new Date(chartData[chartData.length - 1].timestamp));
+    return eachDayOfInterval({ start, end }).map((d) => d.getTime());
+  }, [chartData]);
+
   if (chartData.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
@@ -91,7 +98,12 @@ export function PredictionHistoryChart({ predictions, questionTitle }: Predictio
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
-            dataKey="date"
+            dataKey="timestamp"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
+            ticks={dailyTicks}
+            tickFormatter={(ts: number) => format(new Date(ts), 'd MMM', { locale: pl })}
             tick={{ fontSize: 12 }}
             className="text-muted-foreground"
             angle={-45}
