@@ -12,8 +12,57 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       predictions: {
         Row: {
           brier_score: number | null
@@ -61,6 +110,13 @@ export type Database = {
             columns: ["question_id"]
             isOneToOne: false
             referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "predictions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -131,7 +187,6 @@ export type Database = {
       questions: {
         Row: {
           author_id: string | null
-          category: string | null
           close_date: string | null
           created_at: string
           description: string | null
@@ -139,12 +194,12 @@ export type Database = {
           resolution_criteria: string | null
           resolution_date: string | null
           resolution_status: string | null
+          tags: string[]
           title: string
           updated_at: string
         }
         Insert: {
           author_id?: string | null
-          category?: string | null
           close_date?: string | null
           created_at?: string
           description?: string | null
@@ -152,12 +207,12 @@ export type Database = {
           resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
+          tags?: string[]
           title: string
           updated_at?: string
         }
         Update: {
           author_id?: string | null
-          category?: string | null
           close_date?: string | null
           created_at?: string
           description?: string | null
@@ -165,6 +220,7 @@ export type Database = {
           resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
+          tags?: string[]
           title?: string
           updated_at?: string
         }
@@ -206,6 +262,10 @@ export type Database = {
           resolution_date: string
         }
         Returns: number
+      }
+      rename_question_tag: {
+        Args: { new_tag: string; old_tag: string }
+        Returns: undefined
       }
     }
     Enums: {
@@ -335,6 +395,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
