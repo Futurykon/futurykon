@@ -50,15 +50,15 @@ export default function Questions() {
   const { categories } = useCategories();
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchQuestions();
-      await fetchPredictions();
-      await fetchCommunityPredictions();
-      if (user) {
-        await checkAdminStatus();
-      }
-    };
-    loadData();
+    fetchQuestions();
+    fetchPredictions();
+    fetchCommunityPredictions();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAdminStatus = async () => {
@@ -81,19 +81,15 @@ export default function Questions() {
   };
 
   const fetchPredictions = async () => {
-    console.log('🔍 Fetching predictions...');
     const { data, error } = await getAllPredictions();
 
-    console.log('📊 Predictions query result:', { data, error, count: data?.length });
-
     if (error) {
-      console.error('❌ Error fetching predictions:', error);
+      console.error('Error fetching predictions:', error);
       return;
     }
 
     const predictionMap: Record<string, Prediction[]> = {};
     if (data) {
-      console.log('✅ Processing', data.length, 'prediction records');
       for (const row of data) {
         const prediction: Prediction = {
           id: row.id,
@@ -109,7 +105,6 @@ export default function Questions() {
         }
         predictionMap[prediction.question_id].push(prediction);
       }
-      console.log('📦 Prediction map built:', Object.keys(predictionMap).length, 'questions with predictions');
     }
     setPredictions(predictionMap);
   };
