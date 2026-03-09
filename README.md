@@ -5,7 +5,7 @@ A prediction market application built with React, TypeScript, Vite, and Supabase
 ## Features
 
 - User authentication (email/password and magic link)
-- Create and view prediction questions
+- Suggest (admin can accept or create) and view prediction questions
 - Submit predictions with probability estimates
 - Responsive design with Tailwind CSS
 
@@ -88,9 +88,9 @@ This project is built with:
 - Tailwind CSS
 - Supabase
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/cb68717e-4c19-48dd-ab81-8424694476af) and click on Share -> Publish.
+See on [futurykon.vercel.app](https://futurykon.vercel.app).
 
 ## Contributing
 
