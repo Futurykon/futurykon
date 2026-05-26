@@ -25,6 +25,7 @@ import { TagMultiSelect } from '@/components/TagMultiSelect';
 import { PredictionThread } from '@/components/PredictionThread';
 import { PredictionHistoryChart } from '@/components/PredictionHistoryChart';
 import type { Question, Prediction, CommunityPrediction } from '@/types';
+import { isQuestionExpired } from '@/lib/predictions';
 
 export default function Questions() {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -180,10 +181,6 @@ export default function Questions() {
     setIsSubmitting(false);
   };
 
-  const isExpired = (closeDate: string) => {
-    return new Date(closeDate) < new Date();
-  };
-
   const resolveQuestion = async (questionId: string, outcome: 'yes' | 'no') => {
     setIsSubmitting(true);
     const { error } = await resolveQ(questionId, outcome);
@@ -285,7 +282,7 @@ export default function Questions() {
         return false;
       }
       // Status filter
-      if (statusFilter === 'active' && (q.resolution_status !== 'pending' || isExpired(q.close_date))) {
+      if (statusFilter === 'active' && (q.resolution_status !== 'pending' || isQuestionExpired(q.close_date))) {
         return false;
       }
       if (statusFilter === 'resolved' && q.resolution_status === 'pending') {
@@ -382,7 +379,7 @@ export default function Questions() {
             const userPrediction = getUserPrediction(question.id);
             const allPredictions = predictions[question.id] || [];
             const communityPrediction = communityPredictions[question.id];
-            const expired = isExpired(question.close_date);
+            const expired = isQuestionExpired(question.close_date);
 
             return (
               <Card key={question.id} className="w-full">

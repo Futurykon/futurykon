@@ -5,6 +5,7 @@ import { pl } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import type { Prediction, UserPredictionGroup } from '@/types';
 import { getDisplayName } from '@/lib/profiles';
+import { groupByUser } from '@/lib/predictions';
 
 function formatPredictionDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -13,29 +14,6 @@ function formatPredictionDate(dateStr: string): string {
   return format(date, 'd MMM yyyy', { locale: pl });
 }
 
-function groupPredictionsByUser(preds: Prediction[]): UserPredictionGroup[] {
-  const map = new Map<string, Prediction[]>();
-  // preds are already sorted newest-first from the fetch
-  for (const p of preds) {
-    const arr = map.get(p.user_id);
-    if (arr) arr.push(p);
-    else map.set(p.user_id, [p]);
-  }
-  const groups: UserPredictionGroup[] = [];
-  for (const [userId, userPreds] of map) {
-    const latest = userPreds[0];
-    groups.push({
-      user_id: userId,
-      user_email: latest.profiles?.email || latest.user_email,
-      user_display_name: latest.profiles?.display_name || latest.user_display_name,
-      latest: latest,
-      history: userPreds.slice(1),
-    });
-  }
-  // Sort groups by latest prediction date, newest first
-  groups.sort((a, b) => new Date(b.latest.created_at).getTime() - new Date(a.latest.created_at).getTime());
-  return groups;
-}
 
 interface PredictionThreadProps {
   predictions: Prediction[];
@@ -44,7 +22,7 @@ interface PredictionThreadProps {
 }
 
 export function PredictionThread({ predictions, currentUserId, showUserLinks = true }: PredictionThreadProps) {
-  const groups = groupPredictionsByUser(predictions);
+  const groups = groupByUser(predictions);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const uniqueUserCount = groups.length;
 

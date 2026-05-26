@@ -11,6 +11,7 @@ import { User, TrendingUp, Target, Calendar, CheckCircle, XCircle, Clock } from 
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { Prediction, Question } from '@/types';
+import { isQuestionExpired } from '@/lib/predictions';
 import { useCategories } from '@/hooks/useCategories';
 
 interface QuestionWithPrediction {
@@ -104,7 +105,7 @@ export default function MyPredictions() {
 
   const filteredPredictions = questionPredictions.filter((qp) => {
     if (filter === 'active') {
-      return qp.question.resolution_status === 'pending' && new Date(qp.question.close_date) > new Date();
+      return qp.question.resolution_status === 'pending' && !isQuestionExpired(qp.question.close_date);
     }
     if (filter === 'resolved') {
       return qp.question.resolution_status !== 'pending';
@@ -219,7 +220,7 @@ export default function MyPredictions() {
                 <div className="space-y-4">
                   {filteredPredictions.map(({ question, latestPrediction, predictionCount }) => {
                     const isResolved = question.resolution_status !== 'pending';
-                    const isExpired = new Date(question.close_date) < new Date();
+                    const isExpired = isQuestionExpired(question.close_date);
 
                     return (
                       <div key={question.id} className="border rounded-lg p-4">
