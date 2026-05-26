@@ -1,4 +1,4 @@
-# Plutura - Prediction Market
+# Futurykon — Polska platforma predykcji AI
 
 A prediction market application built with React, TypeScript, Vite, and Supabase.
 
