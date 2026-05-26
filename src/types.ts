@@ -50,7 +50,7 @@ export interface QuestionSuggestion {
   id: string;
   title: string;
   description: string | null;
-  category: string | null;
+  tags: string[];
   close_date: string | null;
   suggested_by: string;
   status: 'pending' | 'approved' | 'rejected';

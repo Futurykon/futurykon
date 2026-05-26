@@ -11,7 +11,7 @@ export function getPendingSuggestions() {
 export function createSuggestion(data: {
   title: string;
   description: string | null;
-  category: string;
+  tags: string[];
   close_date: string;
   suggested_by: string;
 }) {

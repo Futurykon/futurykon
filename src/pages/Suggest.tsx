@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TagMultiSelect } from "@/components/TagMultiSelect";
 import { Lightbulb, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -19,7 +19,7 @@ import { useCategories } from "@/hooks/useCategories";
 const Suggest = () => {
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [endDate, setEndDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +41,7 @@ const Suggest = () => {
       return;
     }
 
-    if (!question || !category || !endDate) {
+    if (!question || !endDate) {
       toast({
         title: "Brakujące dane",
         description: "Wypełnij wszystkie wymagane pola.",
@@ -56,7 +56,7 @@ const Suggest = () => {
       const { error } = await createSuggestion({
         title: question,
         description: description || null,
-        category: category,
+        tags,
         close_date: endDate.toISOString(),
         suggested_by: user.id,
       });
@@ -139,19 +139,13 @@ const Suggest = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Kategoria*</Label>
-                    <Select value={category} onValueChange={setCategory} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wybierz kategorię" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.name}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Tagi</Label>
+                    <TagMultiSelect
+                      categories={categories}
+                      value={tags}
+                      onChange={setTags}
+                      placeholder="Wybierz tagi..."
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -180,7 +174,7 @@ const Suggest = () => {
                     <Button
                       type="submit"
                       className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
-                      disabled={!question || !category || !endDate || isSubmitting}
+                      disabled={!question || !endDate || isSubmitting}
                     >
                       <TrendingUp className="w-4 h-4 mr-2" />
                       {isSubmitting ? "Wysyłanie..." : "Wyślij propozycję"}

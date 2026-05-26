@@ -60,7 +60,7 @@ const AskQuestion = () => {
       title: suggestion.title,
       description: suggestion.description,
       resolution_criteria: suggestion.description || null,
-      tags: suggestion.category ? [suggestion.category] : [],
+      tags: suggestion.tags ?? [],
       close_date: suggestion.close_date ?? '',
       author_id: user?.id,
     });
@@ -342,7 +342,7 @@ const AskQuestion = () => {
                         </p>
                       )}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <span>Kategoria: {suggestion.category}</span>
+                        <span>Tagi: {suggestion.tags?.join(', ') || '—'}</span>
                         {suggestion.close_date && (
                           <span>
                             Rozstrzygnięcie: {format(new Date(suggestion.close_date), 'd MMM yyyy', { locale: pl })}
