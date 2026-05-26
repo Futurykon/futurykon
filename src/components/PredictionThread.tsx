@@ -4,6 +4,7 @@ import { format, isToday, isThisYear } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import type { Prediction, UserPredictionGroup } from '@/types';
+import { getDisplayName } from '@/lib/profiles';
 
 function formatPredictionDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -56,9 +57,8 @@ export function PredictionThread({ predictions, currentUserId, showUserLinks = t
     });
   };
 
-  const getUserDisplayName = (group: UserPredictionGroup) => {
-    return group.user_display_name || group.user_email || 'Anonim';
-  };
+  const getUserDisplayName = (group: UserPredictionGroup) =>
+    getDisplayName({ display_name: group.user_display_name, email: group.user_email });
 
   return (
     <div className="border-t pt-4">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, TrendingUp, Target } from 'lucide-react';
+import { getDisplayName } from '@/lib/profiles';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -57,7 +58,7 @@ export default function Leaderboard() {
       const avg = scores.reduce((sum, s) => sum + s, 0) / scores.length;
       leaderboard.push({
         user_id: userId,
-        email: profile?.email || 'Nieznany',
+        email: getDisplayName(profile, 'Nieznany'),
         display_name: profile?.display_name || null,
         avg_brier: avg,
         scored_count: scores.length,

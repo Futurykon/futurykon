@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
-import { getIsAdmin } from '@/services/profiles';
+import { getProfile } from '@/services/profiles';
 
 interface UseAdminResult {
   isAdmin: boolean;
@@ -21,7 +21,7 @@ export const useAdmin = (): UseAdminResult => {
       }
 
       try {
-        const { data, error } = await getIsAdmin(user.id);
+        const { data, error } = await getProfile(user.id);
 
         if (error) {
           console.error('Error checking admin status:', error);
