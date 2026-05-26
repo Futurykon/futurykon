@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getIsAdmin } from '@/services/profiles';
 import { getQuestions, resolveQuestion as resolveQ, editQuestion as editQ, deleteQuestion as deleteQ } from '@/services/questions';
 import { getAllPredictions, createPrediction } from '@/services/predictions';
 import { getCommunityPredictions } from '@/services/communityPredictions';
 import { useAuth } from '@/hooks/useAuth';
+import { AdminOnly } from '@/components/AdminOnly';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,6 @@ export default function Questions() {
   const [probability, setProbability] = useState([50]);
   const [reasoning, setReasoning] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -55,20 +54,6 @@ export default function Questions() {
     fetchPredictions();
     fetchCommunityPredictions();
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      checkAdminStatus();
-    }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const checkAdminStatus = async () => {
-    if (!user) return;
-    const { data, error } = await getIsAdmin(user.id);
-    if (!error && data) {
-      setIsAdmin(data.is_admin || false);
-    }
-  };
 
   const fetchQuestions = async () => {
     const { data, error } = await getQuestions();
@@ -421,7 +406,7 @@ export default function Questions() {
                           </div>
                         )}
                       </div>
-                      {isAdmin && (
+                      <AdminOnly>
                         <div className="flex gap-1">
                           <Button
                             size="sm"
@@ -441,7 +426,7 @@ export default function Questions() {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      )}
+                      </AdminOnly>
                     </div>
                   </div>
                 </CardHeader>
@@ -543,28 +528,30 @@ export default function Questions() {
                   )}
 
                   {/* Resolution buttons for admins */}
-                  {isAdmin && expired && question.resolution_status === 'pending' && (
-                    <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
-                      <h4 className="font-medium mb-3 text-amber-900">Rozstrzygnij pytanie (admin):</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => resolveQuestion(question.id, 'yes')}
-                          disabled={isSubmitting}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Rozstrzygnij jako TAK
-                        </Button>
-                        <Button
-                          onClick={() => resolveQuestion(question.id, 'no')}
-                          disabled={isSubmitting}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Rozstrzygnij jako NIE
-                        </Button>
+                  {question.resolution_status === 'pending' && (
+                    <AdminOnly>
+                      <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+                        <h4 className="font-medium mb-3 text-amber-900">Rozstrzygnij pytanie (admin):</h4>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => resolveQuestion(question.id, 'yes')}
+                            disabled={isSubmitting}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Rozstrzygnij jako TAK
+                          </Button>
+                          <Button
+                            onClick={() => resolveQuestion(question.id, 'no')}
+                            disabled={isSubmitting}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Rozstrzygnij jako NIE
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    </AdminOnly>
                   )}
 
                   {communityPrediction && communityPrediction.prediction_count > 0 && (
