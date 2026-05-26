@@ -88,16 +88,10 @@ export default function MyPredictions() {
     // Calculate stats
     const totalPreds = predictions.length;
     const uniqueQuestions = questionIds.length;
-    const scoredPreds = predictions.filter((p) => p.brier_score !== null);
-    const avgBrier =
-      scoredPreds.length > 0
-        ? scoredPreds.reduce((sum, p) => sum + (p.brier_score || 0), 0) / scoredPreds.length
-        : null;
-
     setStats({
       totalPredictions: totalPreds,
       questionsCount: uniqueQuestions,
-      avgBrierScore: avgBrier,
+      avgBrierScore: null,
     });
 
     setLoading(false);
@@ -171,9 +165,9 @@ export default function MyPredictions() {
                   <Calendar className="w-8 h-8 text-primary" />
                   <div>
                     <div className="text-2xl font-bold">
-                      {stats.avgBrierScore !== null ? stats.avgBrierScore.toFixed(3) : '—'}
+                      {stats.questionsCount}
                     </div>
-                    <div className="text-sm text-muted-foreground">Śr. Brier Score</div>
+                    <div className="text-sm text-muted-foreground">Pytania z predykcją</div>
                   </div>
                 </div>
               </CardContent>
@@ -277,18 +271,6 @@ export default function MyPredictions() {
                             <span className="text-muted-foreground">
                               {predictionCount} {predictionCount === 1 ? 'aktualizacja' : 'aktualizacji'}
                             </span>
-                          )}
-                          {isResolved && latestPrediction.brier_score !== null && (
-                            <>
-                              <span className="text-muted-foreground">
-                                Brier: <strong>{latestPrediction.brier_score.toFixed(3)}</strong>
-                              </span>
-                              {latestPrediction.time_weighted_score !== null && (
-                                <span className="text-muted-foreground text-xs">
-                                  Ważony czasem: {latestPrediction.time_weighted_score.toFixed(3)}
-                                </span>
-                              )}
-                            </>
                           )}
                         </div>
 

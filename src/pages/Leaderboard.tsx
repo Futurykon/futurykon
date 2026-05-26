@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getPredictionsWithBrierScores } from '@/services/predictions';
+import { getQuestionScores, getPredictionCountsPerUser } from '@/services/predictions';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, TrendingUp, Target } from 'lucide-react';
 import { getDisplayName } from '@/lib/profiles';
 
+const MIN_QUESTIONS = 5;
+
 interface LeaderboardEntry {
   user_id: string;
-  email: string;
-  display_name: string | null;
-  avg_brier: number;
+  display_name: string;
+  avg_log_score: number;
   scored_count: number;
 }
 
@@ -25,49 +26,56 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    // Query predictions with Brier scores, join with profiles
-    const { data, error } = await getPredictionsWithBrierScores();
+    const [scoresResult, countsResult] = await Promise.all([
+      getQuestionScores(),
+      getPredictionCountsPerUser(),
+    ]);
 
-    if (error || !data) {
+    if (scoresResult.error || !scoresResult.data) {
       setLoading(false);
       return;
     }
 
-    // Group by user and calculate average
-    const userMap = new Map<string, {
-      scores: number[];
-      profile: { email?: string; display_name?: string } | undefined
-    }>();
-
-    for (const row of data) {
-      const userId = row.user_id;
-      if (!userMap.has(userId)) {
-        userMap.set(userId, {
-          scores: [],
-          profile: (row as { profiles?: { email?: string; display_name?: string } }).profiles,
-        });
-      }
-      if (row.brier_score !== null) {
-        userMap.get(userId)!.scores.push(row.brier_score);
+    // Count distinct questions predicted on per user (includes unresolved)
+    const questionCountPerUser = new Map<string, Set<string>>();
+    if (countsResult.data) {
+      for (const row of countsResult.data) {
+        if (!questionCountPerUser.has(row.user_id)) {
+          questionCountPerUser.set(row.user_id, new Set());
+        }
+        questionCountPerUser.get(row.user_id)!.add(row.question_id);
       }
     }
 
-    // Build leaderboard entries
+    // Group scores by user
+    const userMap = new Map<string, {
+      scores: number[];
+      profile: { email?: string; display_name?: string } | undefined;
+    }>();
+
+    for (const row of scoresResult.data) {
+      if (!userMap.has(row.user_id)) {
+        userMap.set(row.user_id, { scores: [], profile: row.profiles });
+      }
+      userMap.get(row.user_id)!.scores.push(row.log_score);
+    }
+
+    // Build entries, apply 5+ question threshold, sort descending
     const leaderboard: LeaderboardEntry[] = [];
     for (const [userId, { scores, profile }] of userMap) {
+      const questionCount = questionCountPerUser.get(userId)?.size ?? 0;
+      if (questionCount < MIN_QUESTIONS) continue;
+
       const avg = scores.reduce((sum, s) => sum + s, 0) / scores.length;
       leaderboard.push({
         user_id: userId,
-        email: getDisplayName(profile, 'Nieznany'),
-        display_name: profile?.display_name || null,
-        avg_brier: avg,
+        display_name: getDisplayName(profile, 'Nieznany'),
+        avg_log_score: avg,
         scored_count: scores.length,
       });
     }
 
-    // Sort by avg_brier (lower is better)
-    leaderboard.sort((a, b) => a.avg_brier - b.avg_brier);
-
+    leaderboard.sort((a, b) => b.avg_log_score - a.avg_log_score);
     setEntries(leaderboard);
     setLoading(false);
   };
@@ -96,7 +104,7 @@ export default function Leaderboard() {
               Ranking prognostyków
             </h1>
             <p className="text-muted-foreground text-lg">
-              Najlepsi przewidywacze przyszłości AI, uszeregowani według średniego Brier Score (niższy = lepszy)
+              Najlepsi przewidywacze przyszłości AI, uszeregowani według średniego Log Score (wyższy = lepszy)
             </p>
           </div>
 
@@ -104,7 +112,7 @@ export default function Leaderboard() {
             <CardHeader>
               <CardTitle>Tabela liderów</CardTitle>
               <CardDescription>
-                Tylko użytkownicy z przynajmniej jedną ocenioną predykcją
+                Tylko użytkownicy z przynajmniej {MIN_QUESTIONS} pytaniami i co najmniej jedną ocenioną predykcją
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -121,37 +129,28 @@ export default function Leaderboard() {
                     <TableRow>
                       <TableHead className="w-16">Miejsce</TableHead>
                       <TableHead>Użytkownik</TableHead>
-                      <TableHead className="text-right">Śr. Brier Score</TableHead>
-                      <TableHead className="text-right">Ocenione predykcje</TableHead>
+                      <TableHead className="text-right">Śr. Log Score</TableHead>
+                      <TableHead className="text-right">Ocenione pytania</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {entries.map((entry, index) => {
                       const rank = index + 1;
                       let badge = null;
-                      if (rank === 1) {
-                        badge = <Badge className="bg-yellow-500">🥇 1</Badge>;
-                      } else if (rank === 2) {
-                        badge = <Badge className="bg-gray-400">🥈 2</Badge>;
-                      } else if (rank === 3) {
-                        badge = <Badge className="bg-orange-600">🥉 3</Badge>;
-                      }
+                      if (rank === 1) badge = <Badge className="bg-yellow-500">🥇 1</Badge>;
+                      else if (rank === 2) badge = <Badge className="bg-gray-400">🥈 2</Badge>;
+                      else if (rank === 3) badge = <Badge className="bg-orange-600">🥉 3</Badge>;
 
                       return (
                         <TableRow key={entry.user_id}>
-                          <TableCell className="font-medium">
-                            {badge || rank}
-                          </TableCell>
+                          <TableCell className="font-medium">{badge || rank}</TableCell>
                           <TableCell>
-                            <Link
-                              to={`/profile/${entry.user_id}`}
-                              className="hover:underline font-medium"
-                            >
-                              {entry.display_name || entry.email}
+                            <Link to={`/profile/${entry.user_id}`} className="hover:underline font-medium">
+                              {entry.display_name}
                             </Link>
                           </TableCell>
                           <TableCell className="text-right font-mono">
-                            {entry.avg_brier.toFixed(3)}
+                            {entry.avg_log_score.toFixed(3)}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {entry.scored_count}
@@ -165,17 +164,17 @@ export default function Leaderboard() {
             </CardContent>
           </Card>
 
-          {/* Info card */}
           <Card className="mt-6 bg-muted/30">
             <CardContent className="pt-6">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                O Brier Score
+                O Log Score
               </h3>
               <p className="text-sm text-muted-foreground">
-                Brier Score to miara dokładności prognoz probabilistycznych. Wynik 0 oznacza
-                idealną prognozę, a 1 oznacza najgorszy możliwy wynik. Formuła: (p - wynik)²,
-                gdzie p to Twoja prognoza (0-1), a wynik to 0 lub 1.
+                Log Score to właściwa miara dokładności prognoz probabilistycznych (model Metaculus).
+                Każdy przedział, przez który utrzymujesz daną prognozę, jest oceniany proporcjonalnie
+                do czasu jego trwania. Formuła: y·ln(p) + (1−y)·ln(1−p), gdzie p to Twoja prognoza (0–1),
+                a y to wynik (0 lub 1). Wyższy (mniej ujemny) wynik = lepsza prognoza.
               </p>
             </CardContent>
           </Card>

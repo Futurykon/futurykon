@@ -23,11 +23,20 @@ export function getMyPredictions(userId: string) {
     .order('created_at', { ascending: false });
 }
 
-export function getPredictionsWithBrierScores() {
-  return supabase
-    .from('predictions')
-    .select('user_id, brier_score, profiles(email, display_name)')
-    .not('brier_score', 'is', null);
+export async function getQuestionScores(): Promise<{
+  data: Array<{ question_id: string; user_id: string; log_score: number; profiles?: { email?: string; display_name?: string } }> | null;
+  error: Error | null;
+}> {
+  return (supabase
+    .from('question_scores' as never)
+    .select('question_id, user_id, log_score, profiles(email, display_name)') as unknown as Promise<{
+    data: Array<{ question_id: string; user_id: string; log_score: number; profiles?: { email?: string; display_name?: string } }> | null;
+    error: Error | null;
+  }>);
+}
+
+export function getPredictionCountsPerUser() {
+  return supabase.from('predictions').select('user_id, question_id');
 }
 
 export function createPrediction(data: {
