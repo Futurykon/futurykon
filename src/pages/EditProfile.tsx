@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getDisplayName, updateDisplayName } from '@/services/profiles';
+import { getProfile, updateDisplayName } from '@/services/profiles';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ export default function EditProfile() {
   const loadProfile = async () => {
     if (!user) return;
 
-    const { data, error } = await getDisplayName(user.id);
+    const { data, error } = await getProfile(user.id);
 
     if (error) {
       console.error('Error loading profile:', error);
