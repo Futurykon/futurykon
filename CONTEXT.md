@@ -51,6 +51,40 @@ Ranks users by **average time-averaged log score** across all resolved questions
 - `close_date` — the deadline after which no new predictions are accepted. Two gaps to fix: (1) DB-level enforcement missing — needs a `WITH CHECK` on the predictions INSERT RLS policy; (2) UI should also actively block the form (not just hide it) when `close_date` has passed.
 - `resolution_date` — when the admin resolves the question. Can be before `close_date` (early resolution). Scoring uses `resolution_date` as the end of the final interval.
 
+---
+
+### API Key
+A secret token a user generates in Developer Settings to authenticate MCP tool calls. One active key per user at a time. Stored as a hash in `api_keys (id, user_id, key_hash, created_at)`. Shown **once** at generation time; cycling (regenerating) invalidates the old key. Scopes are derived from `profiles.is_admin` — no separate scope column. Validated server-side by the MCP Edge Function.
+
+### MCP Edge Function
+A Supabase Edge Function (`functions/mcp`) that acts as the trust boundary between the public MCP package and the Supabase DB. Holds the service role key. Validates incoming API keys against `api_keys`, resolves `user_id`, and executes Supabase operations with explicit user scoping. Never exposed in client code.
+
+### MCP Server
+An npm-published Node.js package (`futurykon-mcp`, repo `Futurykon/futurykon-mcp`). Runs locally on the user's machine via `npx futurykon-mcp`. Speaks MCP stdio protocol to the local agent (Claude Desktop, Cursor, etc.) and translates tool calls to HTTPS requests to the **MCP Edge Function**. Contains no secrets — only the user's API key (provided at startup).
+
+### MCP Tools
+The set of operations the MCP Server exposes to agents:
+
+**Read — any authenticated user:**
+- `list_questions(status?, tag?)`
+- `search_questions(query?, tags[]?, status?, closing_before?, closing_after?, created_after?)`
+- `get_question(id)` — includes community prediction
+- `get_my_predictions()` — latest prediction per question for the key's user
+- `get_leaderboard()`
+
+**Write — user-level:**
+- `create_prediction(question_id, probability, reasoning?)`
+
+**Write — admin-level** (only available when `profiles.is_admin = true`):
+- `create_question(title, resolution_criteria, close_date, tags?)`
+- `resolve_question(id, outcome)`
+- `delete_question(id)`
+
+### Developer Settings
+A page in the Futurykon app (`/settings/developer`) where users can generate and cycle their API key. Shows key status (created_at) but never the key itself after initial display.
+
+---
+
 ## To Do
 
 ### Scoring overhaul
