@@ -56,8 +56,11 @@ Ranks users by **average time-averaged log score** across all resolved questions
 ### API Key
 A secret token a user generates in Developer Settings to authenticate MCP tool calls. One active key per user at a time. Stored as a hash in `api_keys (id, user_id, key_hash, created_at)`. Shown **once** at generation time; cycling (regenerating) invalidates the old key. Scopes are derived from `profiles.is_admin` — no separate scope column. Validated server-side by the MCP Edge Function.
 
+### Question Search
+Server-side full-text search across question `title`, `description`, and `resolution_criteria`, with optional filters: `tags[]`, `status`, `closing_before`, `closing_after`, `created_after`. Implemented as a Supabase Edge Function (`functions/search-questions`) or Postgres FTS. **Two consumers:** (1) the app's `QuestionsFilter` search bar — replaces the current client-side title filter; (2) the MCP `search_questions` tool. One implementation, shared by both.
+
 ### MCP Edge Function
-A Supabase Edge Function (`functions/mcp`) that acts as the trust boundary between the public MCP package and the Supabase DB. Holds the service role key. Validates incoming API keys against `api_keys`, resolves `user_id`, and executes Supabase operations with explicit user scoping. Never exposed in client code.
+A Supabase Edge Function (`functions/mcp`) that acts as the trust boundary between the public MCP package and the Supabase DB. Holds the service role key. Validates incoming API keys against `api_keys`, resolves `user_id`, and executes Supabase operations with explicit user scoping. Delegates search to the **Question Search** function. Never exposed in client code.
 
 ### MCP Server
 An npm-published Node.js package (`futurykon-mcp`, repo `Futurykon/futurykon-mcp`). Runs locally on the user's machine via `npx futurykon-mcp`. Speaks MCP stdio protocol to the local agent (Claude Desktop, Cursor, etc.) and translates tool calls to HTTPS requests to the **MCP Edge Function**. Contains no secrets — only the user's API key (provided at startup).
