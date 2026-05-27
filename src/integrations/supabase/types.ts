@@ -151,35 +151,35 @@ export type Database = {
       question_suggestions: {
         Row: {
           admin_note: string | null
-          category: string | null
           close_date: string | null
           created_at: string | null
           description: string | null
           id: string
           status: string | null
           suggested_by: string
+          tags: string[]
           title: string
         }
         Insert: {
           admin_note?: string | null
-          category?: string | null
           close_date?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           status?: string | null
           suggested_by: string
+          tags?: string[]
           title: string
         }
         Update: {
           admin_note?: string | null
-          category?: string | null
           close_date?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           status?: string | null
           suggested_by?: string
+          tags?: string[]
           title?: string
         }
         Relationships: []
