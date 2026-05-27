@@ -88,6 +88,24 @@ A page in the Futurykon app (`/settings/developer`) where users can generate and
 
 ---
 
+### Prediction Reasoning
+The optional text explanation a user attaches to a prediction. Stored as `predictions.reasoning`. Can be edited after submission — edits are flagged visibly in the UI and via the `edited` field. The probability itself is not editable post-submission; only the reasoning.
+
+### Futurykon Bot Template
+A forkable GitHub repo (`Futurykon/futurykon-bot-template`) that lets anyone run an AI forecasting bot against their own Futurykon account. Mirrors the [metac-bot-template](https://github.com/Metaculus/metac-bot-template) pattern.
+
+Architecture:
+- **Language**: Python + Poetry
+- **LLM default**: OpenRouter (any LiteLLM-compatible provider works: OpenAI, Anthropic, Ollama for local models including Bielik)
+- **Local model support**: via Ollama — set `MODEL=ollama/<model-name>` and `OLLAMA_BASE_URL=http://localhost:11434`
+- **Auth**: `FUTURYKON_API_KEY` env var — user generates their key at `/settings/developer`
+- **Data access**: HTTP calls to the MCP Edge Function (same as `futurykon-mcp` package)
+- **Research step**: LLM-only by default; structured so a search provider can replace it in one place
+- **Prediction updates**: configurable `SKIP_PREVIOUSLY_FORECASTED=true/false` (default `true`)
+- **Schedule**: GitHub Actions cron, default daily, configurable in the workflow yaml
+
+---
+
 ## To Do
 
 ### Scoring overhaul
