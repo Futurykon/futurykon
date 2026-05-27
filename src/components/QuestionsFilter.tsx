@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Loader2 } from 'lucide-react';
 import type { Category } from '@/services/categories';
 
 interface QuestionsFilterProps {
@@ -11,6 +11,7 @@ interface QuestionsFilterProps {
   statusFilter: string;
   sortBy: string;
   categories: Category[];
+  searching?: boolean;
   onSearchChange: (v: string) => void;
   onCategoryChange: (v: string) => void;
   onStatusChange: (v: string) => void;
@@ -23,6 +24,7 @@ export function QuestionsFilter({
   statusFilter,
   sortBy,
   categories,
+  searching = false,
   onSearchChange,
   onCategoryChange,
   onStatusChange,
@@ -33,7 +35,9 @@ export function QuestionsFilter({
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            {searching
+              ? <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
+              : <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />}
             <Input
               placeholder="Szukaj pytań..."
               value={searchQuery}

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Code2 } from "lucide-react";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -75,6 +75,9 @@ export const Header = () => {
                 <Link to="/edit-profile" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
                   <User className="w-4 h-4" />
                   {displayName || user.email}
+                </Link>
+                <Link to="/settings/developer" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                  <Code2 className="w-4 h-4" />
                 </Link>
                 <Button variant="outline" size="sm" onClick={signOut}>
                   <LogOut className="w-4 h-4 mr-2" />

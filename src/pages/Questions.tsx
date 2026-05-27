@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getQuestions } from '@/services/questions';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPredictions } from '@/services/predictions';
 import { getCommunityPredictions } from '@/services/communityPredictions';
+import { searchQuestions } from '@/services/search';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { Header } from '@/components/Header';
@@ -18,17 +18,16 @@ export default function Questions() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [searching, setSearching] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
   const { categories } = useCategories();
 
-  const fetchAll = useCallback(async () => {
-    const [qRes, pRes, cpRes] = await Promise.all([
-      getQuestions(),
+  const fetchPredictionsAndCommunity = useCallback(async () => {
+    const [pRes, cpRes] = await Promise.all([
       getAllPredictions(),
       getCommunityPredictions(),
     ]);
-
-    if (qRes.data) setQuestions(qRes.data);
 
     if (pRes.data) {
       const map: Record<string, Prediction[]> = {};
@@ -55,30 +54,63 @@ export default function Questions() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
-
-  const filteredQuestions = questions
-    .filter((q) => {
-      if (searchQuery && !q.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      if (categoryFilter !== 'all' && !(q.tags || []).includes(categoryFilter)) return false;
-      if (statusFilter === 'active' && (q.resolution_status !== 'pending' || isQuestionExpired(q.close_date))) return false;
-      if (statusFilter === 'resolved' && q.resolution_status === 'pending') return false;
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'newest': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'closing': return new Date(a.close_date).getTime() - new Date(b.close_date).getTime();
-        case 'predictions': {
-          const aCount = communityPredictions[a.id]?.prediction_count || 0;
-          const bCount = communityPredictions[b.id]?.prediction_count || 0;
-          return bCount - aCount;
-        }
-        default: return 0;
-      }
+  const runSearch = useCallback(async (
+    query: string,
+    category: string,
+    status: string,
+  ) => {
+    setSearching(true);
+    const { data } = await searchQuestions({
+      query: query || undefined,
+      tags: category !== 'all' ? [category] : undefined,
+      status: status !== 'all' ? status : undefined,
     });
+    if (data) setQuestions(data);
+    setSearching(false);
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    runSearch('', 'all', 'all');
+    fetchPredictionsAndCommunity();
+  }, [runSearch, fetchPredictionsAndCommunity]);
+
+  // Debounced search on filter changes
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      runSearch(searchQuery, categoryFilter, statusFilter);
+    }, 300);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [searchQuery, categoryFilter, statusFilter, runSearch]);
+
+  const fetchAll = useCallback(async () => {
+    await Promise.all([
+      runSearch(searchQuery, categoryFilter, statusFilter),
+      fetchPredictionsAndCommunity(),
+    ]);
+  }, [searchQuery, categoryFilter, statusFilter, runSearch, fetchPredictionsAndCommunity]);
+
+  const sortedQuestions = [...questions].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case 'closing': return new Date(a.close_date).getTime() - new Date(b.close_date).getTime();
+      case 'predictions': {
+        const aCount = communityPredictions[a.id]?.prediction_count || 0;
+        const bCount = communityPredictions[b.id]?.prediction_count || 0;
+        return bCount - aCount;
+      }
+      default: return 0;
+    }
+  });
+
+  // Client-side active/expired filter (status 'active' needs isQuestionExpired check)
+  const filteredQuestions = sortedQuestions.filter((q) => {
+    if (statusFilter === 'active' && (q.resolution_status !== 'pending' || isQuestionExpired(q.close_date))) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-arctic/10 to-lavender/10">
@@ -101,6 +133,7 @@ export default function Questions() {
           onCategoryChange={setCategoryFilter}
           onStatusChange={setStatusFilter}
           onSortChange={setSortBy}
+          searching={searching}
         />
 
         <div className="grid gap-6">
