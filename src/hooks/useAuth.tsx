@@ -1,17 +1,29 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivityTracker } from './useActivityTracker';
+
+// Clears any lingering Supabase auth tokens from localStorage so a stale
+// session can't interfere with a fresh sign-in/sign-out attempt.
+const cleanupAuthState = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  signInWithEmail: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components -- pre-existing pattern: this file pairs the AuthProvider component with its useAuth hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -55,19 +67,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const signInWithEmail = async (email: string): Promise<{ error: AuthError | null }> => {
+    // Clean up any stale auth state before attempting a fresh sign-in
+    cleanupAuthState();
+
+    // Attempt global sign out first, ignoring failures
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err) {
+      // Continue even if this fails
+      console.log('Sign out error (ignoring):', err);
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    return { error };
+  };
+
   const signOut = async () => {
     try {
       // Clean up auth state first
-      const cleanupAuthState = () => {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-      };
-
       cleanupAuthState();
-      
+
       // Attempt global sign out
       try {
         await supabase.auth.signOut({ scope: 'global' });
@@ -75,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Continue even if this fails
         console.log('Sign out error (ignoring):', err);
       }
-      
+
       // Force page reload for clean state
       window.location.href = '/';
     } catch (error) {
@@ -89,6 +115,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     loading,
+    signInWithEmail,
     signOut,
   };
 

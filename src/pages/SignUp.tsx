@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 
@@ -13,29 +13,12 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const cleanupAuthState = () => {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-        localStorage.removeItem(key);
-      }
-    });
-  };
+  const { signInWithEmail } = useAuth();
 
   const sendMagicLink = async () => {
     setIsLoading(true);
     try {
-      cleanupAuthState();
-      try {
-        await supabase.auth.signOut({ scope: "global" });
-      } catch {}
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      const { error } = await signInWithEmail(email);
 
       if (error) {
         toast({ title: "Błąd wysyłania", description: error.message, variant: "destructive" });
