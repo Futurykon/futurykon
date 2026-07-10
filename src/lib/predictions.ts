@@ -5,6 +5,24 @@ export function isQuestionExpired(closeDate: string): boolean {
   return new Date(closeDate) < new Date();
 }
 
+/**
+ * TypeScript twin of the SQL `calculate_community_prediction()` function
+ * (supabase/migrations/20250207000000_prediction_history.sql). The SQL function
+ * is AUTHORITATIVE — it is what the app and API return. This twin exists only so
+ * the Prediction History chart can redraw the community line as a time series
+ * (recomputing the geometric mean of odds at each historical point client-side,
+ * which is impractical to round-trip to the DB per frame).
+ *
+ * The two implementations must stay in lock-step: their agreement is guarded by
+ * the fixture-driven parity test in
+ * src/lib/community-prediction-parity.test.ts, which runs the real SQL function
+ * (extracted from the migration) against this function over shared fixtures.
+ * If you change the formula here, change it in the migration too — or the parity
+ * test will fail.
+ *
+ * Note: unlike the SQL function (which returns NULL for an empty set), this twin
+ * returns a 50 UI fallback when there are no predictions.
+ */
 export function calculateCommunityProbability(probabilities: number[]): number {
   if (probabilities.length === 0) return 50;
   const clamped = probabilities.map((p) => Math.max(0.01, Math.min(99.99, p)));
