@@ -137,35 +137,13 @@ Deno.serve(async (req) => {
       }
 
       case 'get_leaderboard': {
-        const { data: scores, error } = await admin
-          .from('question_scores')
-          .select('user_id, log_score');
+        // The full ranking rule (avg log score, 5-distinct-questions threshold,
+        // descending sort) lives in the `leaderboard` DB view.
+        const { data, error } = await admin
+          .from('leaderboard')
+          .select('user_id, avg_log_score, scored_count');
         if (error) return respond({ error: error.message }, 500);
-
-        const { data: counts } = await admin
-          .from('predictions')
-          .select('user_id, question_id');
-
-        const questionCountPerUser = new Map<string, Set<string>>();
-        for (const row of counts ?? []) {
-          if (!questionCountPerUser.has(row.user_id)) questionCountPerUser.set(row.user_id, new Set());
-          questionCountPerUser.get(row.user_id)!.add(row.question_id);
-        }
-
-        const userScores = new Map<string, number[]>();
-        for (const row of scores ?? []) {
-          if (!userScores.has(row.user_id)) userScores.set(row.user_id, []);
-          userScores.get(row.user_id)!.push(row.log_score);
-        }
-
-        const leaderboard = [];
-        for (const [uid, sc] of userScores) {
-          if ((questionCountPerUser.get(uid)?.size ?? 0) < 5) continue;
-          const avg = sc.reduce((a, b) => a + b, 0) / sc.length;
-          leaderboard.push({ user_id: uid, avg_log_score: avg, scored_count: sc.length });
-        }
-        leaderboard.sort((a, b) => b.avg_log_score - a.avg_log_score);
-        return respond({ data: leaderboard });
+        return respond({ data: data ?? [] });
       }
 
       case 'create_prediction': {

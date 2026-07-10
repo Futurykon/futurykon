@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getQuestionScores, getPredictionCountsPerUser } from '@/services/predictions';
+import { getLeaderboard } from '@/services/predictions';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, TrendingUp, Target } from 'lucide-react';
-import { getDisplayName } from '@/lib/profiles';
+import { mapLeaderboardRow, type LeaderboardEntry } from '@/lib/leaderboard';
 
 const MIN_QUESTIONS = 5;
-
-interface LeaderboardEntry {
-  user_id: string;
-  display_name: string;
-  avg_log_score: number;
-  scored_count: number;
-}
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -26,57 +19,16 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    const [scoresResult, countsResult] = await Promise.all([
-      getQuestionScores(),
-      getPredictionCountsPerUser(),
-    ]);
+    // The full ranking rule (avg log score, 5-distinct-questions threshold,
+    // descending sort) lives in the `leaderboard` DB view — this is a thin read.
+    const { data, error } = await getLeaderboard();
 
-    if (scoresResult.error || !scoresResult.data) {
+    if (error || !data) {
       setLoading(false);
       return;
     }
 
-    // Count distinct questions predicted on per user (includes unresolved)
-    const questionCountPerUser = new Map<string, Set<string>>();
-    if (countsResult.data) {
-      for (const row of countsResult.data) {
-        if (!questionCountPerUser.has(row.user_id)) {
-          questionCountPerUser.set(row.user_id, new Set());
-        }
-        questionCountPerUser.get(row.user_id)!.add(row.question_id);
-      }
-    }
-
-    // Group scores by user
-    const userMap = new Map<string, {
-      scores: number[];
-      profile: { email?: string; display_name?: string } | undefined;
-    }>();
-
-    for (const row of scoresResult.data) {
-      if (!userMap.has(row.user_id)) {
-        userMap.set(row.user_id, { scores: [], profile: row.profiles });
-      }
-      userMap.get(row.user_id)!.scores.push(row.log_score);
-    }
-
-    // Build entries, apply 5+ question threshold, sort descending
-    const leaderboard: LeaderboardEntry[] = [];
-    for (const [userId, { scores, profile }] of userMap) {
-      const questionCount = questionCountPerUser.get(userId)?.size ?? 0;
-      if (questionCount < MIN_QUESTIONS) continue;
-
-      const avg = scores.reduce((sum, s) => sum + s, 0) / scores.length;
-      leaderboard.push({
-        user_id: userId,
-        display_name: getDisplayName(profile, 'Nieznany'),
-        avg_log_score: avg,
-        scored_count: scores.length,
-      });
-    }
-
-    leaderboard.sort((a, b) => b.avg_log_score - a.avg_log_score);
-    setEntries(leaderboard);
+    setEntries(data.map(mapLeaderboardRow));
     setLoading(false);
   };
 

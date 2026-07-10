@@ -286,6 +286,16 @@ export type Database = {
       }
     }
     Views: {
+      leaderboard: {
+        Row: {
+          avg_log_score: number | null
+          display_name: string | null
+          email: string | null
+          scored_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       community_predictions: {
         Row: {
           close_date: string | null
