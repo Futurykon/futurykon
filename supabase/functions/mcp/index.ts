@@ -1,17 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { crypto } from 'https://deno.land/std@0.224.0/crypto/mod.ts';
-import { encodeHex } from 'https://deno.land/std@0.224.0/encoding/hex.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-async function hashKey(key: string): Promise<string> {
-  const data = new TextEncoder().encode(key);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return encodeHex(new Uint8Array(hash));
-}
+import { corsHeaders } from '../_shared/cors.ts';
+import { hashKey } from '../_shared/hashKey.ts';
+import { buildSearchQueryString } from '../_shared/searchQuery.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -85,14 +75,7 @@ Deno.serve(async (req) => {
         const searchUrl = new URL(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/search-questions`,
         );
-        if (params.query) searchUrl.searchParams.set('query', params.query as string);
-        if (params.status) searchUrl.searchParams.set('status', params.status as string);
-        if (params.closing_before) searchUrl.searchParams.set('closing_before', params.closing_before as string);
-        if (params.closing_after) searchUrl.searchParams.set('closing_after', params.closing_after as string);
-        if (params.created_after) searchUrl.searchParams.set('created_after', params.created_after as string);
-        if (Array.isArray(params.tags)) {
-          for (const tag of params.tags) searchUrl.searchParams.append('tags', tag as string);
-        }
+        searchUrl.search = buildSearchQueryString(params).toString();
         const res = await fetch(searchUrl.toString(), {
           headers: { authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
         });

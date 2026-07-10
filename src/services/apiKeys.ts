@@ -20,8 +20,15 @@ function generateRawKey(): string {
     .join('');
 }
 
-/** SHA-256 hex hash of the raw key (stored in DB). */
-async function hashKey(raw: string): Promise<string> {
+/**
+ * SHA-256 hex hash of the raw key (stored in DB).
+ *
+ * Must stay byte-identical to the Deno implementation in
+ * supabase/functions/_shared/hashKey.ts — see
+ * test/fixtures/hashKeyFixture.ts for the shared parity fixture asserted
+ * by both sides.
+ */
+export async function hashKey(raw: string): Promise<string> {
   const data = new TextEncoder().encode(raw);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf))
