@@ -23,16 +23,10 @@ export function getMyPredictions(userId: string) {
     .order('created_at', { ascending: false });
 }
 
-export async function getQuestionScores(): Promise<{
-  data: Array<{ question_id: string; user_id: string; log_score: number; profiles?: { email?: string; display_name?: string } }> | null;
-  error: Error | null;
-}> {
-  return (supabase
-    .from('question_scores' as never)
-    .select('question_id, user_id, log_score, profiles(email, display_name)') as unknown as Promise<{
-    data: Array<{ question_id: string; user_id: string; log_score: number; profiles?: { email?: string; display_name?: string } }> | null;
-    error: Error | null;
-  }>);
+export function getQuestionScores() {
+  return supabase
+    .from('question_scores')
+    .select('question_id, user_id, log_score, profiles(email, display_name)');
 }
 
 export function getPredictionCountsPerUser() {

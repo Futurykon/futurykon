@@ -39,6 +39,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string
@@ -65,35 +86,29 @@ export type Database = {
       }
       predictions: {
         Row: {
-          brier_score: number | null
           created_at: string
           id: string
           probability: number
           question_id: string
           reasoning: string | null
-          time_weighted_score: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          brier_score?: number | null
           created_at?: string
           id?: string
           probability: number
           question_id: string
           reasoning?: string | null
-          time_weighted_score?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          brier_score?: number | null
           created_at?: string
           id?: string
           probability?: number
           question_id?: string
           reasoning?: string | null
-          time_weighted_score?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -184,6 +199,49 @@ export type Database = {
         }
         Relationships: []
       }
+      question_scores: {
+        Row: {
+          log_score: number
+          question_id: string
+          scored_at: string
+          user_id: string
+        }
+        Insert: {
+          log_score: number
+          question_id: string
+          scored_at?: string
+          user_id: string
+        }
+        Update: {
+          log_score?: number
+          question_id?: string
+          scored_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_scores_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "community_predictions"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "question_scores_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
           author_id: string | null
@@ -241,10 +299,6 @@ export type Database = {
       }
     }
     Functions: {
-      calculate_brier_score: {
-        Args: { actual_outcome: boolean; prediction_probability: number }
-        Returns: number
-      }
       calculate_community_prediction: {
         Args: { question_uuid: string }
         Returns: {
@@ -253,13 +307,12 @@ export type Database = {
           question_id: string
         }[]
       }
-      calculate_time_weighted_score: {
+      calculate_time_averaged_log_score: {
         Args: {
-          actual_outcome: boolean
-          decay_factor?: number
-          prediction_date: string
-          prediction_probability: number
-          resolution_date: string
+          p_outcome: boolean
+          p_question_id: string
+          p_resolution_date: string
+          p_user_id: string
         }
         Returns: number
       }

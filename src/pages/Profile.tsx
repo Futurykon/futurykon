@@ -8,7 +8,7 @@ import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, TrendingUp, Target, Calendar } from 'lucide-react';
+import { User, TrendingUp, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { Prediction, Question, Profile as ProfileType } from '@/types';
@@ -29,7 +29,6 @@ export default function Profile() {
   const [stats, setStats] = useState({
     totalPredictions: 0,
     questionsCount: 0,
-    avgBrierScore: null as number | null,
   });
 
   useEffect(() => {
@@ -98,16 +97,10 @@ export default function Profile() {
     // Calculate stats
     const totalPreds = predictions.length;
     const uniqueQuestions = questionIds.length;
-    const scoredPreds = predictions.filter((p) => p.brier_score !== null);
-    const avgBrier =
-      scoredPreds.length > 0
-        ? scoredPreds.reduce((sum, p) => sum + (p.brier_score || 0), 0) / scoredPreds.length
-        : null;
 
     setStats({
       totalPredictions: totalPreds,
       questionsCount: uniqueQuestions,
-      avgBrierScore: avgBrier,
     });
 
     setLoading(false);
@@ -177,7 +170,7 @@ export default function Profile() {
           </Card>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
@@ -197,20 +190,6 @@ export default function Profile() {
                   <div>
                     <div className="text-2xl font-bold">{stats.questionsCount}</div>
                     <div className="text-sm text-muted-foreground">Pytania</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-8 h-8 text-primary" />
-                  <div>
-                    <div className="text-2xl font-bold">
-                      {stats.avgBrierScore !== null ? stats.avgBrierScore.toFixed(3) : '—'}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Śr. Brier Score</div>
                   </div>
                 </div>
               </CardContent>
@@ -264,11 +243,6 @@ export default function Profile() {
                           {predictions.length > 1 && (
                             <span className="text-muted-foreground">
                               {predictions.length} {predictions.length === 1 ? 'aktualizacja' : 'aktualizacji'}
-                            </span>
-                          )}
-                          {isResolved && latest.brier_score !== null && (
-                            <span className="text-muted-foreground">
-                              Brier: {latest.brier_score.toFixed(3)}
                             </span>
                           )}
                           {isResolved && (
