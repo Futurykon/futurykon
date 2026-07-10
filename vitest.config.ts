@@ -9,7 +9,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    types: ['vitest/globals']
+    types: ['vitest/globals'],
+    // supabase/functions runs on Deno (import specifiers like
+    // 'https://deno.land/...' aren't resolvable by Node/Vite) and has its
+    // own test files run via `deno test`, not vitest.
+    exclude: ['**/node_modules/**', 'supabase/functions/**'],
   },
   resolve: {
     alias: {
