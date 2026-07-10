@@ -23,14 +23,13 @@ export function getMyPredictions(userId: string) {
     .order('created_at', { ascending: false });
 }
 
-export function getQuestionScores() {
+// The leaderboard ranking rule (per-user avg log_score across resolved
+// questions, gated by the 5-distinct-questions participation threshold, sorted
+// descending) lives entirely in the `leaderboard` DB view. This is a thin read.
+export function getLeaderboard() {
   return supabase
-    .from('question_scores')
-    .select('question_id, user_id, log_score, profiles(email, display_name)');
-}
-
-export function getPredictionCountsPerUser() {
-  return supabase.from('predictions').select('user_id, question_id');
+    .from('leaderboard')
+    .select('user_id, email, display_name, avg_log_score, scored_count');
 }
 
 export function createPrediction(data: {
