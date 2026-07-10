@@ -39,6 +39,7 @@ export default function Questions() {
           probability: row.probability,
           reasoning: row.reasoning,
           created_at: row.created_at,
+          updated_at: row.updated_at,
           profiles: (row as { profiles?: { email?: string; display_name?: string } }).profiles,
         };
         if (!map[p.question_id]) map[p.question_id] = [];
