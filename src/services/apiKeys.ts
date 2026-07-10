@@ -2,14 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 /** Returns the current user's api_key row (without the hash — only metadata). */
 export function getApiKey(userId: string) {
-  return (supabase as ReturnType<typeof import('@supabase/supabase-js').createClient>)
-    .from('api_keys' as never)
+  return supabase
+    .from('api_keys')
     .select('id, created_at')
     .eq('user_id', userId)
-    .maybeSingle() as unknown as Promise<{
-    data: { id: string; created_at: string } | null;
-    error: import('@supabase/supabase-js').PostgrestError | null;
-  }>;
+    .maybeSingle();
 }
 
 /** Generate a cryptographically random API key string. */
@@ -38,12 +35,12 @@ export async function generateApiKey(userId: string): Promise<{ rawKey: string |
     const rawKey = generateRawKey();
     const keyHash = await hashKey(rawKey);
 
-    const { error } = await (supabase as ReturnType<typeof import('@supabase/supabase-js').createClient>)
-      .from('api_keys' as never)
+    const { error } = await supabase
+      .from('api_keys')
       .upsert(
         { user_id: userId, key_hash: keyHash, created_at: new Date().toISOString() },
         { onConflict: 'user_id' },
-      ) as unknown as { error: import('@supabase/supabase-js').PostgrestError | null };
+      );
 
     if (error) return { rawKey: null, error: new Error(error.message) };
     return { rawKey, error: null };
@@ -54,10 +51,8 @@ export async function generateApiKey(userId: string): Promise<{ rawKey: string |
 
 /** Delete the user's current API key. */
 export function deleteApiKey(userId: string) {
-  return (supabase as ReturnType<typeof import('@supabase/supabase-js').createClient>)
-    .from('api_keys' as never)
+  return supabase
+    .from('api_keys')
     .delete()
-    .eq('user_id', userId) as unknown as Promise<{
-    error: import('@supabase/supabase-js').PostgrestError | null;
-  }>;
+    .eq('user_id', userId);
 }

@@ -1,62 +1,34 @@
 // Shared TypeScript interfaces for Futurykon
+//
+// App-facing types are derived from the generated Supabase `Tables<>` row
+// shapes (see src/integrations/supabase/types.ts) plus any client-side-only
+// extensions (e.g. joined `profiles` data attached in service queries).
 
-export interface Question {
-  id: string;
-  title: string;
-  description: string;
-  resolution_criteria: string;
-  close_date: string;
-  created_at: string;
-  resolution_status: string;
-  resolution_date: string | null;
-  author_id: string | null;
-  tags: string[];
-}
+import type { Tables } from '@/integrations/supabase/types';
 
-export interface Prediction {
-  id: string;
-  question_id: string;
-  user_id: string;
-  probability: number;
-  reasoning: string;
-  created_at: string;
-  updated_at?: string;
-  brier_score?: number | null;
-  time_weighted_score?: number | null;
+export type Question = Tables<'questions'>;
+
+export type Prediction = Tables<'predictions'> & {
   user_email?: string;
   user_display_name?: string;
   profiles?: {
     email?: string;
     display_name?: string;
   };
-}
+};
 
-export interface CommunityPrediction {
-  question_id: string;
-  community_probability: number | null;
+export type CommunityPrediction = Pick<
+  Tables<'community_predictions'>,
+  'question_id' | 'community_probability'
+> & {
   prediction_count: number;
-}
+};
 
-export interface Profile {
-  id: string;
-  email: string;
-  display_name?: string | null;
-  is_admin: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type Profile = Tables<'profiles'>;
 
-export interface QuestionSuggestion {
-  id: string;
-  title: string;
-  description: string | null;
-  tags: string[];
-  close_date: string | null;
-  suggested_by: string;
-  status: 'pending' | 'approved' | 'rejected';
-  admin_note: string | null;
-  created_at: string;
-}
+export type QuestionSuggestion = Tables<'question_suggestions'>;
+
+export type QuestionScore = Tables<'question_scores'>;
 
 export interface UserPredictionGroup {
   user_id: string;
