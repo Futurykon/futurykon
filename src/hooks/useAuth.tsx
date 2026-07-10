@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivityTracker } from './useActivityTracker';
+import { getProfile } from '@/services/profiles';
 
 // Clears any lingering Supabase auth tokens from localStorage so a stale
 // session can't interfere with a fresh sign-in/sign-out attempt.
@@ -17,6 +18,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
+  isAdminLoading: boolean;
   signInWithEmail: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
@@ -40,6 +43,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
 
   // Enable activity-based session management for authenticated users
   useActivityTracker({
@@ -66,6 +71,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch is_admin once per session, alongside (not per component instance of)
+  // the profile it belongs to. Refetches whenever the signed-in user changes;
+  // resolves to false immediately when signed out. Depends on the user id
+  // (not the user object) so token refreshes don't retrigger the fetch.
+  const userId = user?.id;
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!userId) {
+      setIsAdmin(false);
+      setIsAdminLoading(false);
+      return;
+    }
+
+    setIsAdminLoading(true);
+
+    const checkAdmin = async () => {
+      try {
+        const { data, error } = await getProfile(userId);
+        if (cancelled) return;
+
+        if (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data?.is_admin ?? false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Error checking admin status:', err);
+          setIsAdmin(false);
+        }
+      } finally {
+        if (!cancelled) setIsAdminLoading(false);
+      }
+    };
+
+    checkAdmin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const signInWithEmail = async (email: string): Promise<{ error: AuthError | null }> => {
     // Clean up any stale auth state before attempting a fresh sign-in
@@ -115,6 +164,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     loading,
+    isAdmin,
+    isAdminLoading,
     signInWithEmail,
     signOut,
   };

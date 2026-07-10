@@ -1,7 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
 import { AuthProvider, useAuth } from './useAuth';
+import { getProfile } from '@/services/profiles';
 
 // The global setup (src/test/setup.ts) already mocks '@/integrations/supabase/client'
 // and exposes the mock via globalThis.mockSupabase.
@@ -10,6 +12,16 @@ const mockSupabase = globalThis.mockSupabase;
 vi.mock('./useActivityTracker', () => ({
   useActivityTracker: vi.fn(),
 }));
+
+// Mock the profile fetch at the module boundary — useAuth calls getProfile()
+// directly to hoist is_admin into the context, so we stub it here rather than
+// wiring the generic supabase.from(...) chain mock.
+vi.mock('@/services/profiles', () => ({
+  getProfile: vi.fn(),
+}));
+
+const mockUser = { id: 'user-1', email: 'user@example.com' } as User;
+const mockSession = { user: mockUser } as Session;
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AuthProvider>{children}</AuthProvider>
@@ -25,6 +37,7 @@ describe('useAuth', () => {
     mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null } });
     mockSupabase.auth.signOut.mockResolvedValue({ error: null });
     mockSupabase.auth.signInWithOtp.mockResolvedValue({ error: null });
+    vi.mocked(getProfile).mockResolvedValue({ data: { is_admin: false }, error: null } as any);
 
     // Reset window.location.href without triggering an actual navigation
     delete (window as any).location;
@@ -176,6 +189,79 @@ describe('useAuth', () => {
       });
 
       expect(window.location.href).toBe('/');
+    });
+  });
+
+  describe('isAdmin', () => {
+    test('is false and not loading when signed out', async () => {
+      mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.isAdmin).toBe(false);
+      expect(result.current.isAdminLoading).toBe(false);
+      expect(getProfile).not.toHaveBeenCalled();
+    });
+
+    test('fetches the profile once and exposes isAdmin: true for an admin session', async () => {
+      mockSupabase.auth.getSession.mockResolvedValue({ data: { session: mockSession } });
+      vi.mocked(getProfile).mockResolvedValue({ data: { is_admin: true }, error: null } as any);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      // Wait for the session to resolve first — otherwise the admin effect's
+      // initial "no user yet" pass (isAdminLoading: false) can satisfy a
+      // waitFor on isAdminLoading before the real fetch has even started.
+      await waitFor(() => expect(result.current.user).not.toBeNull());
+      await waitFor(() => expect(result.current.isAdminLoading).toBe(false));
+
+      expect(result.current.isAdmin).toBe(true);
+      expect(getProfile).toHaveBeenCalledWith('user-1');
+      expect(getProfile).toHaveBeenCalledTimes(1);
+    });
+
+    test('exposes isAdmin: false for a non-admin session', async () => {
+      mockSupabase.auth.getSession.mockResolvedValue({ data: { session: mockSession } });
+      vi.mocked(getProfile).mockResolvedValue({ data: { is_admin: false }, error: null } as any);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.user).not.toBeNull());
+      await waitFor(() => expect(result.current.isAdminLoading).toBe(false));
+
+      expect(result.current.isAdmin).toBe(false);
+    });
+
+    test('treats a profile fetch error as non-admin', async () => {
+      mockSupabase.auth.getSession.mockResolvedValue({ data: { session: mockSession } });
+      vi.mocked(getProfile).mockResolvedValue({
+        data: null,
+        error: { message: 'boom' },
+      } as any);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.user).not.toBeNull());
+      await waitFor(() => expect(result.current.isAdminLoading).toBe(false));
+
+      expect(result.current.isAdmin).toBe(false);
+    });
+
+    test('resets isAdmin to false when the user signs out', async () => {
+      let authStateCallback: (event: string, session: Session | null) => void = () => {};
+      mockSupabase.auth.onAuthStateChange.mockImplementation((cb: typeof authStateCallback) => {
+        authStateCallback = cb;
+        return { data: { subscription: { unsubscribe: vi.fn() } } };
+      });
+      mockSupabase.auth.getSession.mockResolvedValue({ data: { session: mockSession } });
+      vi.mocked(getProfile).mockResolvedValue({ data: { is_admin: true }, error: null } as any);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAdmin).toBe(true));
+
+      act(() => {
+        authStateCallback('SIGNED_OUT', null);
+      });
+
+      await waitFor(() => expect(result.current.isAdmin).toBe(false));
     });
   });
 });
