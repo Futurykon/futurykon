@@ -163,42 +163,6 @@ export type Database = {
         }
         Relationships: []
       }
-      question_suggestions: {
-        Row: {
-          admin_note: string | null
-          close_date: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          status: string | null
-          suggested_by: string
-          tags: string[]
-          title: string
-        }
-        Insert: {
-          admin_note?: string | null
-          close_date?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          status?: string | null
-          suggested_by: string
-          tags?: string[]
-          title: string
-        }
-        Update: {
-          admin_note?: string | null
-          close_date?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          status?: string | null
-          suggested_by?: string
-          tags?: string[]
-          title?: string
-        }
-        Relationships: []
-      }
       question_scores: {
         Row: {
           log_score: number
@@ -242,6 +206,42 @@ export type Database = {
           },
         ]
       }
+      question_suggestions: {
+        Row: {
+          admin_note: string | null
+          close_date: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string | null
+          suggested_by: string
+          tags: string[]
+          title: string
+        }
+        Insert: {
+          admin_note?: string | null
+          close_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          suggested_by: string
+          tags?: string[]
+          title: string
+        }
+        Update: {
+          admin_note?: string | null
+          close_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          suggested_by?: string
+          tags?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           author_id: string | null
@@ -252,9 +252,11 @@ export type Database = {
           resolution_criteria: string | null
           resolution_date: string | null
           resolution_status: string | null
+          share_token: string
           tags: string[]
           title: string
           updated_at: string
+          visibility: Database["public"]["Enums"]["question_visibility"]
         }
         Insert: {
           author_id?: string | null
@@ -265,9 +267,11 @@ export type Database = {
           resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
+          share_token?: string
           tags?: string[]
           title: string
           updated_at?: string
+          visibility?: Database["public"]["Enums"]["question_visibility"]
         }
         Update: {
           author_id?: string | null
@@ -278,24 +282,16 @@ export type Database = {
           resolution_criteria?: string | null
           resolution_date?: string | null
           resolution_status?: string | null
+          share_token?: string
           tags?: string[]
           title?: string
           updated_at?: string
+          visibility?: Database["public"]["Enums"]["question_visibility"]
         }
         Relationships: []
       }
     }
     Views: {
-      leaderboard: {
-        Row: {
-          avg_log_score: number | null
-          display_name: string | null
-          email: string | null
-          scored_count: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
       community_predictions: {
         Row: {
           close_date: string | null
@@ -306,6 +302,24 @@ export type Database = {
           title: string | null
         }
         Relationships: []
+      }
+      leaderboard: {
+        Row: {
+          avg_log_score: number | null
+          display_name: string | null
+          email: string | null
+          scored_count: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -326,13 +340,37 @@ export type Database = {
         }
         Returns: number
       }
+      get_question_by_share_token: {
+        Args: { p_token: string }
+        Returns: {
+          author_id: string | null
+          close_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          resolution_criteria: string | null
+          resolution_date: string | null
+          resolution_status: string | null
+          share_token: string
+          tags: string[]
+          title: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["question_visibility"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       rename_question_tag: {
         Args: { new_tag: string; old_tag: string }
         Returns: undefined
       }
     }
     Enums: {
-      [_ in never]: never
+      question_visibility: "private" | "link_view" | "link_predict" | "public"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -462,6 +500,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      question_visibility: ["private", "link_view", "link_predict", "public"],
+    },
   },
 } as const
